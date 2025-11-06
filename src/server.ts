@@ -4,17 +4,15 @@ import { Server } from "http";
 import config from "./config/index";
 import { PrismaConnection } from "./app/DB/PrismaConnection";
 import app from "./app";
-import { initializeSocketIO } from "./app/lib/socket";
 
 const port = config.port || 5000;
 
 async function main() {
   const server: Server = app.listen(port, () => {
     console.log("Sever is running on port ", port);
-    // PrismaConnection();  // for seed super admin
+    PrismaConnection();
   });
 
-  initializeSocketIO(server);
   const exitHandler = () => {
     if (server) {
       server.close(() => {

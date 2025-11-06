@@ -13,10 +13,6 @@ const routes = [
     path: "/auth",
     component: authRoutes,
   },
-  {
-    path: "/chats",
-    component: ChatRoutes,
-  },
 ];
 
 routes.forEach((route) => router.use(route.path, route.component));
