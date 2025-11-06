@@ -46,7 +46,6 @@ export const webHookService = async (
               subscription.items.data[0].current_period_end * 1000
             ),
             subscriptionId: subscription.id,
-            subscriptionPlanId: subscription.items?.data[0]?.plan?.id || "",
           },
           create: {
             userId: subscription.metadata.userId,
@@ -57,19 +56,9 @@ export const webHookService = async (
             subscriptionEnd: new Date(
               subscription.items.data[0].current_period_end * 1000
             ),
-            subscriptionPlanId: subscription.items?.data[0]?.plan?.id || "",
             subscriptionId: subscription.id,
           },
         });
-
-        // await prisma.payment.create({
-        //   data: {
-        //     serviceId: subscription.metadata.userId,
-        //     paymentId: subscription.latest_invoice?.payment_intent as string,
-        //     amount: subscription.latest_invoice?.amount_due as number,
-        //     status: subscription.latest_invoice?.status as string,
-        //   },
-        // });
 
         break;
       }

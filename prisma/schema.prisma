@@ -8,24 +8,27 @@ datasource db {
 }
 
 model User {
-  id               String          @id @default(auto()) @map("_id") @db.ObjectId
-  email            String          @unique
-  name             String?
-  role             Role            @default(USER)
-  status           Status          @default(PENDING)
-  password         String
-  fcmToken         String?
-  image            String?
-  latitude         Float?
-  longitude        Float?
-  location         String?
-  customerId       String?
-  connectAccountId String?
-  isVerified       Boolean         @default(false)
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  receiver         Notifications[] @relation("receiverDetails")
-  sender           Notifications[] @relation("senderDetails")
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  subscriptionUserId String?         @db.ObjectId
+  email              String          @unique
+  name               String?
+  role               Role            @default(USER)
+  status             Status          @default(PENDING)
+  password           String
+  fcmToken           String?
+  image              String?
+  latitude           Float?
+  longitude          Float?
+  location           String?
+  customerId         String?
+  connectAccountId   String?
+  isVerified         Boolean         @default(false)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  receiver           Notifications[] @relation("receiverDetails")
+  sender             Notifications[] @relation("senderDetails")
+
+  subscriptionUser SubscriptionUser?
 
   @@map("users")
 }
@@ -43,12 +46,15 @@ model Otp {
 
 model SubscriptionUser {
   id                 String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId             String    @db.ObjectId
+  userId             String    @unique @db.ObjectId
   subscriptionId     String?
+  subscriptionStart  DateTime?
   subscriptionEnd    DateTime?
   subscriptionStatus String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
 
   @@map("subscriptionUsers")
 }

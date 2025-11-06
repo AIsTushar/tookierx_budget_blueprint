@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { userRoutes } from "../modules/user/user.routes";
 import { authRoutes } from "../modules/auth/auth.routes";
-import { ChatRoutes } from "../modules/chat/chat.Routes";
+import { paymentRoutes } from "../modules/payment/payment.routes";
 
 const router = Router();
 const routes = [
@@ -12,6 +12,10 @@ const routes = [
   {
     path: "/auth",
     component: authRoutes,
+  },
+  {
+    path: "/payments",
+    component: paymentRoutes,
   },
 ];
 

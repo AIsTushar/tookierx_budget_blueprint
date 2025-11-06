@@ -8,6 +8,7 @@ import { StatusCodes } from "http-status-codes";
 import path from "path";
 import fs from "fs";
 import morgan from "morgan";
+import { webHookService } from "./app/modules/webhook/webhook.Service";
 
 export const myCache = new NodeCache({ stdTTL: 300 });
 const app = express();
@@ -18,7 +19,14 @@ export const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
-app.use(morgan("dev")); // 'dev' is a predefined format
+// Stripe webhook route must come BEFORE express.json()
+app.post(
+  "/api/v1/webhook",
+  express.raw({ type: "application/json" }),
+  webHookService
+);
+
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(cors(corsOptions));
 
