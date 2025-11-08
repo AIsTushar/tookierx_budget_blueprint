@@ -6,9 +6,7 @@ import ApiError from "../../error/ApiErrors";
 import { OTPFn } from "../../helper/OTPFn";
 import OTPVerify from "../../helper/OTPVerify";
 import { StatusCodes } from "http-status-codes";
-import { stripe } from "../../../config/stripe";
 import { createStripeCustomerAcc } from "../../helper/createStripeCustomerAcc";
-import { STATUS_CODES } from "http";
 
 const prisma = new PrismaClient();
 const logInFromDB = async (payload: {
@@ -19,6 +17,14 @@ const logInFromDB = async (payload: {
   const findUser = await prisma.user.findUnique({
     where: {
       email: payload.email,
+    },
+    include: {
+      subscriptionUser: {
+        select: {
+          subscriptionStatus: true,
+          cancelAtPeriodEnd: true,
+        },
+      },
     },
   });
   if (!findUser) {
@@ -48,12 +54,13 @@ const logInFromDB = async (payload: {
     });
   }
   const userInfo = {
+    id: findUser.id,
     email: findUser.email,
     name: findUser.name,
-    id: findUser.id,
-    image: findUser.image,
     role: findUser.role,
     status: findUser.status,
+    subscriptionStatus: findUser.subscriptionUser?.subscriptionStatus,
+    cancelAtPeriodEnd: findUser.subscriptionUser?.cancelAtPeriodEnd,
     fcmToken: findUser.fcmToken,
   };
   const token = jwtHelpers.generateToken(userInfo, { expiresIn: "24h" });
@@ -135,7 +142,6 @@ const socialLogin = async (payload: {
       id: true,
       name: true,
       email: true,
-      image: true,
       role: true,
       customerId: true,
       status: true,
@@ -165,7 +171,6 @@ const socialLogin = async (payload: {
         id: true,
         name: true,
         email: true,
-        image: true,
         role: true,
         customerId: true,
         status: true,

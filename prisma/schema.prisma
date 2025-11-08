@@ -50,6 +50,7 @@ model SubscriptionUser {
   subscriptionStart  DateTime?
   subscriptionEnd    DateTime?
   subscriptionStatus String? // e.g. "active", "canceled", "incomplete"
+  cancelAtPeriodEnd  Boolean   @default(false)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

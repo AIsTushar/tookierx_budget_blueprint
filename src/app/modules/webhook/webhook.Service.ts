@@ -46,6 +46,7 @@ export const webHookService = async (
               subscription.items.data[0].current_period_end * 1000
             ),
             subscriptionId: subscription.id,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
           },
           create: {
             userId: subscription.metadata.userId,
@@ -57,6 +58,7 @@ export const webHookService = async (
               subscription.items.data[0].current_period_end * 1000
             ),
             subscriptionId: subscription.id,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
           },
         });
 

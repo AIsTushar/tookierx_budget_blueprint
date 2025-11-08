@@ -1,10 +1,8 @@
 import { StatusCodes } from "http-status-codes";
 import { prisma } from "../../../utils/prisma";
 import ApiError from "../../error/ApiErrors";
-import Stripe from "stripe";
 import { stripe } from "../../../config/stripe";
 import { createStripeCustomerAcc } from "../../helper/createStripeCustomerAcc";
-import { createStripeConnectAccount } from "../../helper/createStripeConnectAccount";
 
 const subscribeToPlanFromStripe = async (payload: {
   userId: string;
@@ -14,10 +12,22 @@ const subscribeToPlanFromStripe = async (payload: {
     where: {
       id: payload.userId,
     },
+    include: {
+      subscriptionUser: true,
+    },
   });
 
   if (!findUser) {
     throw new ApiError(StatusCodes.NOT_FOUND, "User not found!");
+  }
+
+  if (findUser.subscriptionUser) {
+    if (findUser.subscriptionUser.subscriptionStatus === "active") {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "User already has an active subscription!"
+      );
+    }
   }
 
   if (findUser?.customerId === null) {
@@ -53,6 +63,7 @@ const subscribeToPlanFromStripe = async (payload: {
       subscriptionStatus: purchasePlan.status,
       subscriptionStart: new Date(subscriptionItem.current_period_start * 1000),
       subscriptionEnd: new Date(subscriptionItem.current_period_end * 1000),
+      cancelAtPeriodEnd: purchasePlan.cancel_at_period_end,
     },
     create: {
       userId: payload.userId,
@@ -98,6 +109,10 @@ const cancelSubscriptionFromStripe = async (payload: { userId: string }) => {
     );
   }
 
+  if (findUser.subscriptionUser.cancelAtPeriodEnd) {
+    throw new ApiError(400, "Subscription cancellation already requested!");
+  }
+
   // Cancel the subscription at Stripe
   const cancelledSubscription = await stripe.subscriptions.update(
     findUser.subscriptionUser?.subscriptionId as string,
@@ -113,10 +128,11 @@ const cancelSubscriptionFromStripe = async (payload: { userId: string }) => {
     },
     data: {
       subscriptionStatus: cancelledSubscription.status, // should be "active" but set to cancel later
+      cancelAtPeriodEnd: cancelledSubscription.cancel_at_period_end,
     },
   });
 
-  return cancelledSubscription;
+  return updateUserSubscription;
 };
 
 export const paymentService = {

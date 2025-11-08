@@ -90,7 +90,6 @@ const updateUserIntoDB = async (id: string, payload: any, image: any) => {
       id: true,
       name: true,
       email: true,
-      image: true,
       role: true,
       createdAt: true,
       updatedAt: true,
@@ -100,7 +99,7 @@ const updateUserIntoDB = async (id: string, payload: any, image: any) => {
 };
 
 const getMyProfile = async (id: string) => {
-  const result = await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: {
       id,
     },
@@ -108,16 +107,35 @@ const getMyProfile = async (id: string) => {
       id: true,
       name: true,
       email: true,
-      image: true,
       role: true,
       createdAt: true,
       updatedAt: true,
+
+      subscriptionUser: {
+        select: {
+          subscriptionId: true,
+          subscriptionStatus: true,
+          subscriptionStart: true,
+          subscriptionEnd: true,
+          cancelAtPeriodEnd: true,
+        },
+      },
     },
   });
 
-  if (!result) {
+  if (!user) {
     throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
   }
+
+  const result = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    subscriptionDetails: user.subscriptionUser,
+  };
 
   return result;
 };
