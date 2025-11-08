@@ -6,5 +6,10 @@ import { paymentController } from "./payment.controller";
 const route = Router();
 
 route.post("/subscribe", auth(), paymentController.subscribeController);
+route.post(
+  "/cancel-subscription",
+  auth(),
+  paymentController.cancelSubscriptionController
+);
 
 export const paymentRoutes = route;

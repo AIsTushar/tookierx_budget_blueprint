@@ -50,7 +50,7 @@ model SubscriptionUser {
   subscriptionId     String?
   subscriptionStart  DateTime?
   subscriptionEnd    DateTime?
-  subscriptionStatus String?
+  subscriptionStatus String? // e.g. "active", "canceled", "incomplete"
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

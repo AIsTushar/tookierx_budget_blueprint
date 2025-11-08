@@ -39,6 +39,7 @@ const subscribeToPlanFromStripe = async (payload: {
   const purchasePlan = (await stripe.subscriptions.create({
     customer: findUser.customerId as string,
     items: [{ price: priceid }],
+    metadata: { userId: payload.userId },
   })) as any;
 
   const subscriptionItem = purchasePlan.items.data[0];

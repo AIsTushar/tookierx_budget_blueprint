@@ -19,7 +19,7 @@ export const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
-// Stripe webhook route must come BEFORE express.json()
+
 app.post(
   "/api/v1/webhook",
   express.raw({ type: "application/json" }),

@@ -18,4 +18,20 @@ const subscribeController = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const paymentController = { subscribeController };
+const cancelSubscriptionController = catchAsync(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.id;
+    const result = await paymentService.cancelSubscriptionFromStripe(userId);
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: "Subscription cancelled successfully",
+      data: result,
+    });
+  }
+);
+
+export const paymentController = {
+  subscribeController,
+  cancelSubscriptionController,
+};
