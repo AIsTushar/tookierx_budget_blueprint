@@ -16,7 +16,6 @@ model User {
   status             Status          @default(PENDING)
   password           String
   fcmToken           String?
-  image              String?
   latitude           Float?
   longitude          Float?
   location           String?
