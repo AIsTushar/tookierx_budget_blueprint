@@ -77,6 +77,7 @@ const subscribeToPlanFromStripe = async (payload: {
 };
 
 const cancelSubscriptionFromStripe = async (payload: { userId: string }) => {
+  console.log(payload);
   const findUser = await prisma.user.findUnique({
     where: {
       id: payload.userId,

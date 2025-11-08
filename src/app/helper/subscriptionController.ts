@@ -20,7 +20,7 @@ export const startSubscriptionExpiryCron = () => {
         },
       },
       include: {
-        userDetails: true,
+        user: true,
       },
     });
 
@@ -44,6 +44,5 @@ export const startSubscriptionExpiryCron = () => {
         data: { subscriptionStatus: "CANCELLED" },
       });
     }
-
   });
 };

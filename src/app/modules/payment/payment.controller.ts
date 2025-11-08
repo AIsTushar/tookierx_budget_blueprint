@@ -21,7 +21,8 @@ const subscribeController = catchAsync(async (req: Request, res: Response) => {
 const cancelSubscriptionController = catchAsync(
   async (req: Request, res: Response) => {
     const userId = req.user?.id;
-    const result = await paymentService.cancelSubscriptionFromStripe(userId);
+    const body = { userId };
+    const result = await paymentService.cancelSubscriptionFromStripe(body);
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
