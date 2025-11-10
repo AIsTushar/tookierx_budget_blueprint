@@ -37,12 +37,13 @@ model User {
 
 //  PAYCHECK (Core of Screen 1)  
 model Paycheck {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String    @db.ObjectId
-  user         User      @relation(fields: [userId], references: [id])
-  amount       Float
-  paycheckDate DateTime
-  frequency    Frequency
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String    @db.ObjectId
+  amount        Float
+  paycheckDate  DateTime
+  coverageStart DateTime
+  coverageEnd   DateTime
+  frequency     Frequency
 
   totalBills      Float    @default(0)
   allowanceAmount Float    @default(0)
@@ -51,12 +52,14 @@ model Paycheck {
   updatedAt       DateTime @updatedAt
 
   // Relations
+  user              User                   @relation(fields: [userId], references: [id])
   bills             Bill[]
   allowances        AllowanceTransaction[]
   savings           SavingsTransaction[]
   allowanceTrackers AllowanceTracker[]
   savingsTrackers   SavingsTracker[]
 
+  @@unique([userId, coverageStart, coverageEnd])
   @@map("paychecks")
 }
 

@@ -12,7 +12,7 @@ import {
 	${camel}RangeFilter,
 	${camel}SearchFields,
 	${camel}MultiSelectNestedArrayFilters,
-	${camel}ArrayFilterFields
+	${camel}ArrayFilterFields,
   ${camel}Select
 
 } from "./${camel}.constant";
