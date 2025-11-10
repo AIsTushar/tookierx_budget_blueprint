@@ -165,7 +165,7 @@ model CreditCardTracker {
   @@map("credit_card_trackers")
 }
 
-// CREDIT CARD TRANSACTION
+// CREDIT CARD TRANSACTION/
 model CreditCardTransaction {
   id           String            @id @default(auto()) @map("_id") @db.ObjectId
   creditCardId String            @db.ObjectId

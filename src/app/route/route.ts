@@ -4,6 +4,7 @@ import { authRoutes } from "../modules/auth/auth.routes";
 import { paymentRoutes } from "../modules/payment/payment.routes";
 import { PaycheckRoutes } from "../modules/paycheck/paycheck.route";
 import { BillRoutes } from "../modules/bill/bill.route";
+import { CreditCardTrackerRoutes } from "../modules/creditcardtracker/creditCardTracker.route";
 
 const router = Router();
 const routes = [
@@ -26,6 +27,10 @@ const routes = [
   {
     path: "/bills",
     component: BillRoutes,
+  },
+  {
+    path: "/credit-cards",
+    component: CreditCardTrackerRoutes,
   },
 ];
 
