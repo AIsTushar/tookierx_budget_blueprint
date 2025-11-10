@@ -52,12 +52,11 @@ model Paycheck {
   updatedAt       DateTime @updatedAt
 
   // Relations
-  user              User                   @relation(fields: [userId], references: [id])
-  bills             Bill[]
-  allowances        AllowanceTransaction[]
-  savings           SavingsTransaction[]
-  allowanceTrackers AllowanceTracker[]
-  savingsTrackers   SavingsTracker[]
+  user             User                 @relation(fields: [userId], references: [id])
+  bills            Bill[]
+  savings          SavingsTransaction[]
+  savingsTrackers  SavingsTracker[]
+  allowanceTracker AllowanceTracker?
 
   @@unique([userId, coverageStart, coverageEnd])
   @@map("paychecks")
@@ -68,8 +67,9 @@ model Bill {
   paycheckId String   @db.ObjectId
   name       String
   amount     Float
-  dueDate    Int
+  dueDate    DateTime
   notes      String?
+  isCleared  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -81,16 +81,13 @@ model Bill {
 // ALLOWANCE TRACKER (Screen 2)
 
 model AllowanceTracker {
-  id              String @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String @db.ObjectId
-  paycheckId      String @db.ObjectId
-  // Starting allowance set in Screen 1
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  paycheckId      String   @unique @db.ObjectId
   allowanceAmount Float
-  // Current balance = allowanceAmount + sum(transactions where type = DEBIT)
-  currentBalance  Float  @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  currentBalance  Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user         User                   @relation(fields: [userId], references: [id])
   paycheck     Paycheck               @relation(fields: [paycheckId], references: [id])
@@ -100,10 +97,8 @@ model AllowanceTracker {
 }
 
 model AllowanceTransaction {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  allowanceId String  @db.ObjectId
-  paycheckId  String? @db.ObjectId
-
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  allowanceId String          @db.ObjectId
   type        TransactionType // DEBIT = expense, CREDIT = refund/income (rare)
   amount      Float // Always positive; type determines direction
   description String?
@@ -113,7 +108,6 @@ model AllowanceTransaction {
   updatedAt   DateTime        @updatedAt
 
   allowance AllowanceTracker @relation(fields: [allowanceId], references: [id])
-  paycheck  Paycheck?        @relation(fields: [paycheckId], references: [id])
 
   @@map("allowance_transactions")
 }
@@ -158,10 +152,10 @@ model CreditCardTracker {
   userId String @db.ObjectId
   user   User   @relation(fields: [userId], references: [id])
 
-  cardName        String
-  limit           Float? // Optional
-  startingBalance Float  @default(0) // Balance when added to tracker
-  currentBalance  Float  @default(0) // Computed: startingBalance + sum(charge amounts)
+  cardName String
+
+  currentBalance Float @default(0)
+  clearedBalance Float @default(0)
 
   transactions CreditCardTransaction[]
 
@@ -171,16 +165,19 @@ model CreditCardTracker {
   @@map("credit_card_trackers")
 }
 
+// CREDIT CARD TRANSACTION
 model CreditCardTransaction {
   id           String            @id @default(auto()) @map("_id") @db.ObjectId
   creditCardId String            @db.ObjectId
   creditCard   CreditCardTracker @relation(fields: [creditCardId], references: [id])
 
-  type        TransactionType // DEBIT = charge/purchase, CREDIT = payment
-  amount      Float // Always positive; logic based on type
+  type        TransactionType
+  amount      Float
   description String?
   date        DateTime        @default(now())
-  isPending   Boolean         @default(false)
+  isCleared   Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   @@map("credit_card_transactions")
 }

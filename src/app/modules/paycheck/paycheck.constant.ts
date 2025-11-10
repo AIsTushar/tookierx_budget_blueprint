@@ -55,5 +55,5 @@ export const paycheckInclude: Prisma.PaycheckInclude = {
     },
   },
   bills: true,
-  allowanceTrackers: true,
+  allowanceTracker: true,
 };

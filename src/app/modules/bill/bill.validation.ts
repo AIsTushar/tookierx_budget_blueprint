@@ -1,15 +1,38 @@
-
 import { z } from "zod";
 
 const createBillSchema = z.object({
-	
+  paycheckId: z.string().min(1, "Paycheck ID is required"),
+  name: z.string().min(1, "Bill name is required"),
+  amount: z
+    .number({
+      required_error: "Amount is required",
+      invalid_type_error: "Amount must be a number",
+    })
+    .positive("Amount must be greater than 0"),
+  dueDate: z
+    .string()
+    .datetime({ message: "Invalid date format. Must be an ISO date string." }),
+  notes: z.string().optional(),
+  isCleared: z.boolean().optional().default(false),
 });
 const updateBillSchema = z.object({
-	
+  name: z.string().min(1, "Bill name is required").optional(),
+  amount: z
+    .number({
+      required_error: "Amount is required",
+      invalid_type_error: "Amount must be a number",
+    })
+    .positive("Amount must be greater than 0")
+    .optional(),
+  dueDate: z
+    .string()
+    .datetime({ message: "Invalid date format. Must be an ISO date string." })
+    .optional(),
+  notes: z.string().optional(),
+  isCleared: z.boolean().optional().default(false),
 });
 
 export const BillValidations = {
-	createBillSchema,
-    updateBillSchema,
+  createBillSchema,
+  updateBillSchema,
 };
-

@@ -13,7 +13,6 @@ import {
 } from "./paycheck.constant";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../error/ApiErrors";
-import { Prisma } from "@prisma/client";
 
 const createPaycheck = async (req: Request) => {
   const payload = req.body;
@@ -111,28 +110,58 @@ const getLatestPaycheck = async () => {
 const updatePaycheck = async (req: Request) => {
   const { id } = req.params;
   const data = req.body;
-  const user = req.user;
-  const role = user?.role;
+  const userId = req.user?.id;
 
-  const whereClause: Prisma.PaycheckWhereUniqueInput = {
-    id,
-    ...(role === "-----" ? { userId: user.id } : {}),
-  };
+  const existing = await prisma.paycheck.findUnique({
+    where: { id },
+    include: { allowanceTracker: true },
+  });
 
-  const existing = await prisma.paycheck.findUnique({ where: whereClause });
   if (!existing) {
-    throw new ApiError(
-      StatusCodes.NOT_FOUND,
-      `Paycheck not found with this id: ${id}`
-    );
+    throw new ApiError(StatusCodes.NOT_FOUND, "Paycheck not found");
   }
 
-  return prisma.paycheck.update({
-    where: whereClause,
+  let allowanceData = null;
+
+  if (data.allowanceAmount !== undefined) {
+    const prevAmount = existing.allowanceTracker?.allowanceAmount || 0;
+    const newAmount = data.allowanceAmount;
+
+    allowanceData = await prisma.allowanceTracker.upsert({
+      where: { paycheckId: id },
+      create: {
+        userId,
+        paycheckId: id,
+        allowanceAmount: newAmount,
+        currentBalance: newAmount,
+      },
+      update: {
+        allowanceAmount: newAmount,
+        currentBalance: {
+          increment: newAmount - prevAmount,
+        },
+      },
+    });
+  }
+
+  const totalBills = data.totalBills ?? existing.totalBills ?? 0;
+  const netIncome = data.amount ?? existing.amount ?? 0;
+  const allowance =
+    data.allowanceAmount ?? existing.allowanceTracker?.allowanceAmount ?? 0;
+
+  const savingsTarget = netIncome - totalBills - allowance;
+
+  const updated = await prisma.paycheck.update({
+    where: { id },
     data: {
       ...data,
+      allowanceAmount: allowance,
+      savingsTarget,
     },
+    include: { allowanceTracker: true },
   });
+
+  return { updated };
 };
 
 const deletePaycheck = async (req: Request) => {
