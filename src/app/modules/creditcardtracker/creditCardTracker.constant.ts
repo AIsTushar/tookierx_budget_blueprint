@@ -1,6 +1,6 @@
-
 import { NestedFilter } from "../../interface/nestedFiltering";
 import { rangeFilteringPrams } from "../../../utils/queryBuilder";
+import { Prisma } from "@prisma/client";
 
 // Fields for basic filtering
 export const creditCardTrackerFilterFields = [];
@@ -10,8 +10,7 @@ export const creditCardTrackerSearchFields = [];
 
 // Nested filtering config
 export const creditCardTrackerNestedFilters: NestedFilter[] = [
-	// { key: "user", searchOption: "search", queryFields: ["name"] },
-
+  // { key: "user", searchOption: "search", queryFields: ["name"] },
 ];
 
 // Array-based filtering
@@ -28,20 +27,21 @@ export const creditCardTrackerMultiSelectNestedArrayFilters = [
 
 // Range-based filtering config
 export const creditCardTrackerRangeFilter: rangeFilteringPrams[] = [
-	{
-		field: "createdAt",
-		maxQueryKey: "maxDate",
-		minQueryKey: "minDate",
-		dataType: "date",
-	},
+  {
+    field: "createdAt",
+    maxQueryKey: "maxDate",
+    minQueryKey: "minDate",
+    dataType: "date",
+  },
 ];
 
 // Prisma select configuration
-export const creditCardTrackerSelect = {
- 
+export const creditCardTrackerSelect: Prisma.CreditCardTrackerSelect = {
+  id: true,
+  cardName: true,
+  currentBalance: true,
+  clearedBalance: true,
 };
 
 // Prisma include configuration
-export const creditCardTrackerInclude = {
-	
-};
+export const creditCardTrackerInclude = {};
