@@ -29,13 +29,23 @@ router
   .delete(auth(), CreditCardTrackerControllers.deleteCreditCardTracker);
 
 router
-  .route("/:id/transactions")
-  .post(CreditCardTrackerControllers.addTransactionToCreditCard);
+  .route("/:cardId/transactions")
+  .post(
+    auth(),
+    validateRequest(
+      CreditCardTrackerValidations.addTransactionToCreditCardSchema
+    ),
+    CreditCardTrackerControllers.addTransactionToCreditCard
+  );
 
 router
-  .route("/:id/transactions/:id")
+  .route("/:cardId/transactions/:transactionId")
   .get(auth(), CreditCardTrackerControllers.getTransactionById)
-  .put(auth(), CreditCardTrackerControllers.updateTransactionById)
+  .put(
+    auth(),
+    validateRequest(CreditCardTrackerValidations.updateCreditCardTrackerSchema),
+    CreditCardTrackerControllers.updateTransactionById
+  )
   .delete(auth(), CreditCardTrackerControllers.deleteTransactionById);
 
 export const CreditCardTrackerRoutes = router;
