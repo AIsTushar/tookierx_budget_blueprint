@@ -59,7 +59,7 @@ const addTransactionToAllowanceTracker = catchAsync(async (req, res) => {
 
 const getTransactionById = catchAsync(async (req, res) => {
   const result = await AllowanceTrackerServices.getTransactionById(
-    req.params.id
+    req.params.transactionId
   );
   sendResponse(res, {
     statusCode: StatusCodes.OK,

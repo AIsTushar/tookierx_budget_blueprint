@@ -16,34 +16,6 @@ import { StatusCodes } from "http-status-codes";
 import ApiError from "../../error/ApiErrors";
 import { Prisma } from "@prisma/client";
 
-const recalculateAllowanceBalances = async (allowanceId: string) => {
-  const allowance = await prisma.allowanceTracker.findUnique({
-    where: { id: allowanceId },
-    include: { transactions: true },
-  });
-
-  if (!allowance) return;
-
-  const totalSpent = allowance.transactions.reduce(
-    (sum, txn) => sum + txn.amount,
-    0
-  );
-  const totalCleared = allowance.transactions
-    .filter((txn) => txn.isCleared)
-    .reduce((sum, txn) => sum + txn.amount, 0);
-
-  const newCurrentBalance = allowance.assignedAmount - totalSpent;
-  const newClearedBalance = allowance.assignedAmount - totalCleared;
-
-  await prisma.allowanceTracker.update({
-    where: { id: allowanceId },
-    data: {
-      currentBalance: newCurrentBalance,
-      clearedBalance: newClearedBalance,
-    },
-  });
-};
-
 const getAllowanceTrackers = async (req: Request) => {
   const userId = req.user?.id;
   const queryBuilder = new QueryBuilder(req.query, prisma.allowanceTracker);
@@ -69,13 +41,17 @@ const getLatestAllowanceTracker = async (req: Request) => {
 
   const allowanceTracker = await prisma.allowanceTracker.findFirst({
     where: { userId },
+    include: { transactions: true },
     orderBy: { createdAt: "desc" },
   });
   return allowanceTracker;
 };
 
 const getAllowanceTrackerById = async (id: string) => {
-  return prisma.allowanceTracker.findUnique({ where: { id } });
+  return prisma.allowanceTracker.findUnique({
+    where: { id },
+    include: { transactions: true },
+  });
 };
 
 const updateAllowanceTracker = async (req: Request) => {
@@ -157,15 +133,13 @@ const updateAllowanceTracker = async (req: Request) => {
 };
 
 // Allowance Tracker Transactions Services
-
 const addTransactionToAllowanceTracker = async (req: Request) => {
-  const { id } = req.params;
+  const { id } = req.params; // allowanceTrackerId
   const userId = req.user.id;
   const data = req.body;
 
   const allowance = await prisma.allowanceTracker.findUnique({
     where: { id },
-    include: { paycheck: true, transactions: true },
   });
 
   if (!allowance) {
@@ -179,100 +153,194 @@ const addTransactionToAllowanceTracker = async (req: Request) => {
     );
   }
 
-  const totalSpent = allowance.transactions.reduce(
-    (sum, txn) => sum + txn.amount,
-    0
-  );
+  let { currentBalance, clearedBalance } = allowance;
+  const amount = Number(data.amount);
+  const isCleared = Boolean(data.isCleared);
+  const type = data.type as "DEBIT" | "CREDIT";
 
-  const newTotal = totalSpent + data.amount;
+  // ✅ Apply logic correctly
+  if (type === "DEBIT") {
+    if (isCleared) currentBalance -= amount;
+    clearedBalance -= amount; // affects future projection regardless of clearance
+  } else if (type === "CREDIT") {
+    if (isCleared) currentBalance += amount;
+    clearedBalance += amount;
+  }
 
-  if (newTotal > allowance.assignedAmount) {
+  // ✅ Validation
+  if (currentBalance < 0) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
-      "Transaction exceeds your assigned allowance amount"
+      "Insufficient allowance: cleared transaction exceeds available balance"
+    );
+  }
+  if (clearedBalance < 0) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Insufficient allowance: projected (cleared) balance would be negative"
     );
   }
 
-  const transaction = await prisma.allowanceTransaction.create({
-    data: {
-      ...data,
-      allowanceId: id,
-    },
-  });
-
-  await recalculateAllowanceBalances(id);
+  // ✅ Save both
+  const [transaction] = await prisma.$transaction([
+    prisma.allowanceTransaction.create({
+      data: {
+        ...data,
+        allowanceId: id,
+      },
+    }),
+    prisma.allowanceTracker.update({
+      where: { id },
+      data: {
+        currentBalance,
+        clearedBalance,
+      },
+    }),
+  ]);
 
   return transaction;
 };
+
+// Get transaction
 const getTransactionById = async (id: string) => {
   const transaction = await prisma.allowanceTransaction.findUnique({
     where: { id },
+  });
+  if (!transaction)
+    throw new ApiError(StatusCodes.NOT_FOUND, "Transaction not found");
+  return transaction;
+};
+
+// Update transaction
+const updateTransactionById = async (req: Request) => {
+  const { transactionId: id } = req.params;
+  const userId = req.user.id;
+  const { amount, transactionType, isCleared } = req.body;
+
+  // 1️⃣ Fetch the transaction and related tracker
+  const transaction = await prisma.allowanceTransaction.findUnique({
+    where: { id },
+    include: { allowance: true },
   });
 
   if (!transaction) {
     throw new ApiError(StatusCodes.NOT_FOUND, "Transaction not found");
   }
 
-  return transaction;
-};
+  const tracker = transaction.allowance;
 
-const updateTransactionById = async (req: Request) => {
-  const { id } = req.params;
-  const userId = req.user.id;
-  const data = req.body;
-
-  const existing = await prisma.allowanceTransaction.findUnique({
-    where: { id },
-    include: { allowance: true },
-  });
-
-  if (!existing) {
-    throw new ApiError(StatusCodes.NOT_FOUND, "Transaction not found");
+  // 2️⃣ Check ownership
+  if (tracker.userId !== userId) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Unauthorized");
   }
 
-  if (existing.allowance.userId !== userId) {
+  let newCurrentBalance = tracker.currentBalance;
+  let newClearedBalance = tracker.clearedBalance;
+
+  // 3️⃣ Rollback the old transaction effect
+  if (transaction.isCleared) {
+    // Only affect currentBalance if transaction was cleared
+    if (transaction.type === "DEBIT") {
+      newCurrentBalance += transaction.amount;
+    } else {
+      newCurrentBalance -= transaction.amount;
+    }
+  }
+
+  // Always rollback clearedBalance (even if old transaction was not cleared)
+  if (transaction.type === "DEBIT") {
+    newClearedBalance += transaction.amount;
+  } else {
+    newClearedBalance -= transaction.amount;
+  }
+
+  // 4️⃣ Apply new transaction effect
+  const newType = transactionType ?? transaction.type;
+  const newAmount = amount ?? transaction.amount;
+  const newIsCleared = isCleared ?? transaction.isCleared;
+
+  if (newIsCleared) {
+    // Affect currentBalance only if isCleared is true
+    if (newType === "DEBIT") {
+      newCurrentBalance -= newAmount;
+    } else {
+      newCurrentBalance += newAmount;
+    }
+  }
+
+  // Always affect clearedBalance
+  if (newType === "DEBIT") {
+    newClearedBalance -= newAmount;
+  } else {
+    newClearedBalance += newAmount;
+  }
+
+  // 5️⃣ Validate currentBalance
+  if (newCurrentBalance < 0) {
     throw new ApiError(
-      StatusCodes.FORBIDDEN,
-      "You do not have permission to update this transaction"
+      StatusCodes.BAD_REQUEST,
+      "Insufficient allowance balance"
     );
   }
 
-  const updatedTransaction = await prisma.allowanceTransaction.update({
-    where: { id },
-    data,
-  });
-
-  await recalculateAllowanceBalances(existing.allowanceId);
+  // 6️⃣ Run transactional update
+  const [updatedTransaction, updatedTracker] = await prisma.$transaction([
+    prisma.allowanceTransaction.update({
+      where: { id },
+      data: {
+        amount: newAmount,
+        type: newType,
+        isCleared: newIsCleared,
+      },
+    }),
+    prisma.allowanceTracker.update({
+      where: { id: tracker.id },
+      data: {
+        currentBalance: newCurrentBalance,
+        clearedBalance: newClearedBalance,
+      },
+    }),
+  ]);
 
   return updatedTransaction;
 };
+
+// Delete transaction
 const deleteTransactionById = async (req: Request) => {
-  const { id } = req.params; // transactionId
+  const { transactionId: id } = req.params;
   const userId = req.user.id;
 
   const existing = await prisma.allowanceTransaction.findUnique({
     where: { id },
-    include: { allowance: true },
   });
-
-  if (!existing) {
+  if (!existing)
     throw new ApiError(StatusCodes.NOT_FOUND, "Transaction not found");
-  }
 
-  if (existing.allowance.userId !== userId) {
-    throw new ApiError(
-      StatusCodes.FORBIDDEN,
-      "You do not have permission to delete this transaction"
-    );
-  }
-
-  await prisma.allowanceTransaction.delete({
-    where: { id },
+  const tracker = await prisma.allowanceTracker.findFirst({
+    where: { id: existing.allowanceId, userId },
   });
+  if (!tracker)
+    throw new ApiError(StatusCodes.NOT_FOUND, "AllowanceTracker not found");
 
-  await recalculateAllowanceBalances(existing.allowanceId);
+  let { currentBalance, clearedBalance } = tracker;
 
-  return true;
+  if (existing.type === "DEBIT") {
+    if (existing.isCleared) currentBalance += existing.amount;
+    clearedBalance += existing.amount;
+  } else {
+    if (existing.isCleared) currentBalance -= existing.amount;
+    clearedBalance -= existing.amount;
+  }
+
+  await prisma.$transaction([
+    prisma.allowanceTransaction.delete({ where: { id } }),
+    prisma.allowanceTracker.update({
+      where: { id: tracker.id },
+      data: { currentBalance, clearedBalance },
+    }),
+  ]);
+
+  return { message: "Transaction deleted successfully" };
 };
 
 export const AllowanceTrackerServices = {
