@@ -117,9 +117,9 @@ model AllowanceTransaction {
 
 // SAVINGS TRACKER (Screen 3)
 model SavingsTracker {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String @db.ObjectId
-  paycheckId String @unique @db.ObjectId
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String @db.ObjectId
+  accountName String
 
   currentBalance Float @default(0)
   clearedBalance Float @default(0)

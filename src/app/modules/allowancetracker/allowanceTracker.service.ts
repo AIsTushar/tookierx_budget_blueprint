@@ -158,16 +158,14 @@ const addTransactionToAllowanceTracker = async (req: Request) => {
   const isCleared = Boolean(data.isCleared);
   const type = data.type as "DEBIT" | "CREDIT";
 
-  // ✅ Apply logic correctly
   if (type === "DEBIT") {
     if (isCleared) currentBalance -= amount;
-    clearedBalance -= amount; // affects future projection regardless of clearance
+    clearedBalance -= amount;
   } else if (type === "CREDIT") {
     if (isCleared) currentBalance += amount;
     clearedBalance += amount;
   }
 
-  // ✅ Validation
   if (currentBalance < 0) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
@@ -181,7 +179,6 @@ const addTransactionToAllowanceTracker = async (req: Request) => {
     );
   }
 
-  // ✅ Save both
   const [transaction] = await prisma.$transaction([
     prisma.allowanceTransaction.create({
       data: {
@@ -217,7 +214,6 @@ const updateTransactionById = async (req: Request) => {
   const userId = req.user.id;
   const { amount, transactionType, isCleared } = req.body;
 
-  // 1️⃣ Fetch the transaction and related tracker
   const transaction = await prisma.allowanceTransaction.findUnique({
     where: { id },
     include: { allowance: true },
@@ -229,7 +225,6 @@ const updateTransactionById = async (req: Request) => {
 
   const tracker = transaction.allowance;
 
-  // 2️⃣ Check ownership
   if (tracker.userId !== userId) {
     throw new ApiError(StatusCodes.FORBIDDEN, "Unauthorized");
   }
@@ -237,9 +232,7 @@ const updateTransactionById = async (req: Request) => {
   let newCurrentBalance = tracker.currentBalance;
   let newClearedBalance = tracker.clearedBalance;
 
-  // 3️⃣ Rollback the old transaction effect
   if (transaction.isCleared) {
-    // Only affect currentBalance if transaction was cleared
     if (transaction.type === "DEBIT") {
       newCurrentBalance += transaction.amount;
     } else {
@@ -247,20 +240,17 @@ const updateTransactionById = async (req: Request) => {
     }
   }
 
-  // Always rollback clearedBalance (even if old transaction was not cleared)
   if (transaction.type === "DEBIT") {
     newClearedBalance += transaction.amount;
   } else {
     newClearedBalance -= transaction.amount;
   }
 
-  // 4️⃣ Apply new transaction effect
   const newType = transactionType ?? transaction.type;
   const newAmount = amount ?? transaction.amount;
   const newIsCleared = isCleared ?? transaction.isCleared;
 
   if (newIsCleared) {
-    // Affect currentBalance only if isCleared is true
     if (newType === "DEBIT") {
       newCurrentBalance -= newAmount;
     } else {
@@ -268,14 +258,12 @@ const updateTransactionById = async (req: Request) => {
     }
   }
 
-  // Always affect clearedBalance
   if (newType === "DEBIT") {
     newClearedBalance -= newAmount;
   } else {
     newClearedBalance += newAmount;
   }
 
-  // 5️⃣ Validate currentBalance
   if (newCurrentBalance < 0) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
@@ -283,7 +271,7 @@ const updateTransactionById = async (req: Request) => {
     );
   }
 
-  // 6️⃣ Run transactional update
+  // Run transactional update
   const [updatedTransaction, updatedTracker] = await prisma.$transaction([
     prisma.allowanceTransaction.update({
       where: { id },

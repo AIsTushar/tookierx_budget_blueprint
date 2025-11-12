@@ -1,0 +1,63 @@
+import { StatusCodes } from "http-status-codes";;
+import catchAsync from "../../../shared/catchAsync";
+import sendResponse from "../../middleware/sendResponse";
+import { SavingsTrackerServices } from "./savingsTracker.service";
+
+const createSavingsTracker = catchAsync(async (req, res) => {
+	const result = await SavingsTrackerServices.createSavingsTracker(req);
+	sendResponse(res, {
+		statusCode: StatusCodes.CREATED,
+		success: true,
+		message: "SavingsTracker created successfully",
+		data: result,
+	
+	});
+});
+const getSavingsTrackers = catchAsync(async (req, res) => {
+	const result = await SavingsTrackerServices.getSavingsTrackers(req);
+	sendResponse(res, {
+		statusCode: StatusCodes.OK,
+		success: true,
+		message: "SavingsTrackers retrieved successfully",
+		data: result.data,
+		meta: result.meta,
+	});
+});
+
+const getSavingsTrackerById = catchAsync(async (req, res) => {
+	const result = await SavingsTrackerServices.getSavingsTrackerById(req.params.id);
+	sendResponse(res, {
+		statusCode: StatusCodes.OK,
+		success: true,
+		message: "SavingsTracker retrieved successfully",
+		data: result,
+	});
+});
+
+const updateSavingsTracker = catchAsync(async (req, res) => {
+	const result = await SavingsTrackerServices.updateSavingsTracker(req);
+	sendResponse(res, {
+		statusCode: StatusCodes.OK,
+		success: true,
+		message: "SavingsTracker updated successfully",
+		data: result,
+	});
+});
+
+const deleteSavingsTracker = catchAsync(async (req, res) => {
+	await SavingsTrackerServices.deleteSavingsTracker(req);
+	sendResponse(res, {
+		statusCode: StatusCodes.NO_CONTENT,
+		success: true,
+		message: "SavingsTracker deleted successfully",
+		data: null,
+	});
+});
+
+export const SavingsTrackerControllers = {
+	getSavingsTrackers,
+	getSavingsTrackerById,
+	updateSavingsTracker,
+	deleteSavingsTracker,
+	createSavingsTracker,
+};
