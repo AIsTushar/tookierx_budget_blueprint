@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { CreditCardTrackerControllers } from "./creditCardTracker.controller";
 import auth from "../../middleware/auth";
-import { Role } from "@prisma/client";
 import { parseBodyMiddleware } from "../../middleware/parseBodyData";
 import validateRequest from "../../middleware/validateRequest";
 import { CreditCardTrackerValidations } from "./creditCardTracker.validation";
