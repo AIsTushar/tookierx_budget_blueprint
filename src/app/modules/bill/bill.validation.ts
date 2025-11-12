@@ -13,7 +13,6 @@ const createBillSchema = z.object({
     .string()
     .datetime({ message: "Invalid date format. Must be an ISO date string." }),
   notes: z.string().optional(),
-  isCleared: z.boolean().optional().default(false),
 });
 const updateBillSchema = z.object({
   name: z.string().min(1, "Bill name is required").optional(),
@@ -29,7 +28,6 @@ const updateBillSchema = z.object({
     .datetime({ message: "Invalid date format. Must be an ISO date string." })
     .optional(),
   notes: z.string().optional(),
-  isCleared: z.boolean().optional().default(false),
 });
 
 export const BillValidations = {

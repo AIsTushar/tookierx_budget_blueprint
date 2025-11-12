@@ -47,6 +47,7 @@ model Paycheck {
   coverageStart DateTime
   coverageEnd   DateTime
   frequency     Frequency
+  notes         String?
 
   totalBills      Float    @default(0)
   allowanceAmount Float    @default(0)
@@ -71,7 +72,6 @@ model Bill {
   amount     Float
   dueDate    DateTime
   notes      String?
-  isCleared  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

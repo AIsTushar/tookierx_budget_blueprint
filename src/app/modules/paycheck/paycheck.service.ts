@@ -116,10 +116,16 @@ const getPaychecks = async (req: Request) => {
 };
 
 const getPaycheckById = async (id: string) => {
-  return prisma.paycheck.findUnique({
+  const paycheck = await prisma.paycheck.findUnique({
     where: { id },
     include: paycheckInclude,
   });
+
+  if (!paycheck) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Paycheck not found");
+  }
+
+  return paycheck;
 };
 
 const getLatestPaycheck = async () => {
@@ -146,6 +152,15 @@ const updatePaycheck = async (req: Request) => {
     throw new ApiError(
       StatusCodes.FORBIDDEN,
       "You do not have permission to update this paycheck"
+    );
+  }
+
+  const paycheckAmount = data.amount;
+
+  if (paycheckAmount < existing.totalBills + existing.allowanceAmount) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Paycheck amount must cover both your total bills and allowance."
     );
   }
 
@@ -193,6 +208,7 @@ const updatePaycheck = async (req: Request) => {
       coverageEnd,
       month: data.month ?? existing.month,
       year: data.year ?? existing.year,
+      notes: data.notes ?? existing.notes,
     },
   });
 

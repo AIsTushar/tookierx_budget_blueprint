@@ -84,14 +84,6 @@ const updatePaycheckSchema = z.object({
     })
     .optional(),
 
-  allowanceAmount: z
-    .number({
-      required_error: "Allowance amount is required",
-      invalid_type_error: "Allowance amount must be a number",
-    })
-    .positive("Allowance amount must be greater than 0")
-    .optional(),
-
   coverageStart: z
     .string({
       required_error: "Coverage start date is required",
@@ -135,6 +127,8 @@ const updatePaycheckSchema = z.object({
     })
     .int("Year must be an integer")
     .optional(),
+
+  notes: z.string().optional(),
 });
 
 export const PaycheckValidations = {
