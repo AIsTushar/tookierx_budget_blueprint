@@ -8,21 +8,22 @@ datasource db {
 }
 
 model User {
-  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
-  subscriptionUserId String?  @db.ObjectId
-  email              String   @unique
+  id                 String     @id @default(auto()) @map("_id") @db.ObjectId
+  subscriptionUserId String?    @db.ObjectId
+  email              String     @unique
   name               String?
-  role               Role     @default(USER)
-  status             Status   @default(PENDING)
+  role               Role       @default(USER)
+  status             Status     @default(PENDING)
   password           String
   fcmToken           String?
   latitude           Float?
   longitude          Float?
   location           String?
+  frequency          Frequency?
   customerId         String?
-  isVerified         Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  isVerified         Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
   receiver           Notifications[]     @relation("receiverDetails")
   sender             Notifications[]     @relation("senderDetails")
@@ -40,6 +41,8 @@ model Paycheck {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   userId        String    @db.ObjectId
   amount        Float
+  month         Month
+  year          Int
   paycheckDate  DateTime
   coverageStart DateTime
   coverageEnd   DateTime
@@ -47,15 +50,14 @@ model Paycheck {
 
   totalBills      Float    @default(0)
   allowanceAmount Float    @default(0)
-  savingsTarget   Float    @default(0)
+  savingsAmount   Float    @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   // Relations
-  user             User                 @relation(fields: [userId], references: [id])
+  user             User              @relation(fields: [userId], references: [id])
   bills            Bill[]
-  savings          SavingsTransaction[]
-  savingsTrackers  SavingsTracker[]
+  // savingsTrackers  SavingsTracker?
   allowanceTracker AllowanceTracker?
 
   @@unique([userId, coverageStart, coverageEnd])
@@ -79,15 +81,14 @@ model Bill {
 }
 
 // ALLOWANCE TRACKER (Screen 2)
-
 model AllowanceTracker {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String   @db.ObjectId
-  paycheckId      String   @unique @db.ObjectId
-  allowanceAmount Float
-  currentBalance  Float    @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  paycheckId     String   @unique @db.ObjectId
+  currentBalance Float    @default(0)
+  clearedBalance Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   user         User                   @relation(fields: [userId], references: [id])
   paycheck     Paycheck               @relation(fields: [paycheckId], references: [id])
@@ -99,9 +100,11 @@ model AllowanceTracker {
 model AllowanceTransaction {
   id          String          @id @default(auto()) @map("_id") @db.ObjectId
   allowanceId String          @db.ObjectId
-  type        TransactionType // DEBIT = expense, CREDIT = refund/income (rare)
-  amount      Float // Always positive; type determines direction
+  type        TransactionType
+  amount      Float
   description String?
+  category    String?
+  payee       String?
   date        DateTime        @default(now())
   isCleared   Boolean         @default(false)
   createdAt   DateTime        @default(now())
@@ -114,16 +117,17 @@ model AllowanceTransaction {
 
 // SAVINGS TRACKER (Screen 3)
 model SavingsTracker {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String @db.ObjectId
-  paycheckId     String @db.ObjectId
-  targetAmount   Float
-  currentBalance Float  @default(0)
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String @db.ObjectId
+  paycheckId String @unique @db.ObjectId
+
+  currentBalance Float @default(0)
+  clearedBalance Float @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  paycheck     Paycheck             @relation(fields: [paycheckId], references: [id])
+  // paycheck     Paycheck             @relation(fields: [paycheckId], references: [id])
   user         User                 @relation(fields: [userId], references: [id])
   transactions SavingsTransaction[]
 
@@ -134,14 +138,17 @@ model SavingsTransaction {
   id        String @id @default(auto()) @map("_id") @db.ObjectId
   savingsId String @db.ObjectId
 
-  type        TransactionType // CREDIT = saved money, DEBIT = withdrawal
-  amount      Float // Always positive; sign handled by type
-  description String?
-  date        DateTime        @default(now())
-  isPending   Boolean         @default(false)
-  paycheckId  String?         @db.ObjectId
-  paycheck    Paycheck?       @relation(fields: [paycheckId], references: [id])
-  savings     SavingsTracker  @relation(fields: [savingsId], references: [id])
+  type           TransactionType // CREDIT = saved money, DEBIT = withdrawal
+  amount         Float
+  currentBalance Float           @default(0)
+  clearedBalance Float           @default(0)
+  description    String?
+  category       String?
+  payee          String?
+  date           DateTime        @default(now())
+  isCleared      Boolean         @default(false)
+  paycheckId     String?         @db.ObjectId
+  savings        SavingsTracker  @relation(fields: [savingsId], references: [id])
 
   @@map("savings_transactions")
 }
@@ -174,6 +181,8 @@ model CreditCardTransaction {
   type        TransactionType
   amount      Float
   description String?
+  category    String?
+  payee       String?
   date        DateTime        @default(now())
   isCleared   Boolean         @default(false)
   createdAt   DateTime        @default(now())
@@ -247,4 +256,19 @@ enum Status {
   PENDING
   ACTIVE
   BLOCKED
+}
+
+enum Month {
+  JANUARY
+  FEBRUARY
+  MARCH
+  APRIL
+  MAY
+  JUNE
+  JULY
+  AUGUST
+  SEPTEMBER
+  OCTOBER
+  NOVEMBER
+  DECEMBER
 }

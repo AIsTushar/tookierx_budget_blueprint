@@ -21,22 +21,44 @@ const createPaycheckSchema = z.object({
     invalid_type_error: "Frequency must be one of WEEKLY, BIWEEKLY",
   }),
 
-  coverageStart: z
-    .string({
-      required_error: "Coverage start date is required",
-    })
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Coverage start must be a valid date",
-    }),
+  coverageStart: z.string({
+    required_error: "Coverage start date is required",
+  }),
 
-  coverageEnd: z
-    .string({
-      required_error: "Coverage end date is required",
+  coverageEnd: z.string({
+    required_error: "Coverage end date is required",
+  }),
+
+  month: z.enum(
+    [
+      "JANUARY",
+      "FEBRUARY",
+      "MARCH",
+      "APRIL",
+      "MAY",
+      "JUNE",
+      "JULY",
+      "AUGUST",
+      "SEPTEMBER",
+      "OCTOBER",
+      "NOVEMBER",
+      "DECEMBER",
+    ],
+    {
+      required_error: "Month is required",
+      invalid_type_error:
+        "Month must be one of JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER",
+    }
+  ),
+
+  year: z
+    .number({
+      required_error: "Year is required",
+      invalid_type_error: "Year must be a number",
     })
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Coverage end must be a valid date",
-    }),
+    .int("Year must be an integer"),
 });
+
 const updatePaycheckSchema = z.object({
   amount: z
     .number({
@@ -68,6 +90,50 @@ const updatePaycheckSchema = z.object({
       invalid_type_error: "Allowance amount must be a number",
     })
     .positive("Allowance amount must be greater than 0")
+    .optional(),
+
+  coverageStart: z
+    .string({
+      required_error: "Coverage start date is required",
+    })
+    .optional(),
+
+  coverageEnd: z
+    .string({
+      required_error: "Coverage end date is required",
+    })
+    .optional(),
+
+  month: z
+    .enum(
+      [
+        "JANUARY",
+        "FEBRUARY",
+        "MARCH",
+        "APRIL",
+        "MAY",
+        "JUNE",
+        "JULY",
+        "AUGUST",
+        "SEPTEMBER",
+        "OCTOBER",
+        "NOVEMBER",
+        "DECEMBER",
+      ],
+      {
+        required_error: "Month is required",
+        invalid_type_error:
+          "Month must be one of JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER",
+      }
+    )
+    .optional(),
+
+  year: z
+    .number({
+      required_error: "Year is required",
+      invalid_type_error: "Year must be a number",
+    })
+    .int("Year must be an integer")
     .optional(),
 });
 

@@ -4,11 +4,8 @@ import QueryBuilder from "../../../utils/queryBuilder";
 import {
   paycheckFilterFields,
   paycheckInclude,
-  paycheckNestedFilters,
   paycheckRangeFilter,
   paycheckSearchFields,
-  paycheckMultiSelectNestedArrayFilters,
-  paycheckArrayFilterFields,
   paycheckSelect,
 } from "./paycheck.constant";
 import { StatusCodes } from "http-status-codes";
@@ -20,7 +17,7 @@ const createPaycheck = async (req: Request) => {
   if (userId) {
     payload.userId = userId;
   }
-  // ckeck if coverageEnd is after coverageStart
+
   const coverageStart = new Date(payload.coverageStart);
   const coverageEnd = new Date(payload.coverageEnd);
   if (coverageEnd <= coverageStart) {
@@ -72,8 +69,33 @@ const createPaycheck = async (req: Request) => {
     );
   }
 
-  const paycheck = await prisma.paycheck.create({ data: payload });
-  return paycheck;
+  const result = await prisma.$transaction(async (tx) => {
+    const paycheck = await tx.paycheck.create({
+      data: {
+        userId,
+        amount: payload.amount,
+        month: payload.month,
+        year: payload.year,
+        paycheckDate: new Date(payload.paycheckDate),
+        coverageStart,
+        coverageEnd,
+        frequency: payload.frequency,
+        savingsAmount: payload.amount,
+      },
+    });
+
+    await tx.allowanceTracker.create({
+      data: {
+        userId,
+        paycheckId: paycheck.id,
+        currentBalance: 0,
+        clearedBalance: 0,
+      },
+    });
+
+    return paycheck;
+  });
+  return result;
 };
 
 const getPaychecks = async (req: Request) => {
@@ -114,58 +136,129 @@ const updatePaycheck = async (req: Request) => {
 
   const existing = await prisma.paycheck.findUnique({
     where: { id },
-    include: { allowanceTracker: true },
   });
 
   if (!existing) {
     throw new ApiError(StatusCodes.NOT_FOUND, "Paycheck not found");
   }
 
-  let allowanceData = null;
-
-  if (data.allowanceAmount !== undefined) {
-    const prevAmount = existing.allowanceTracker?.allowanceAmount || 0;
-    const newAmount = data.allowanceAmount;
-
-    allowanceData = await prisma.allowanceTracker.upsert({
-      where: { paycheckId: id },
-      create: {
-        userId,
-        paycheckId: id,
-        allowanceAmount: newAmount,
-        currentBalance: newAmount,
-      },
-      update: {
-        allowanceAmount: newAmount,
-        currentBalance: {
-          increment: newAmount - prevAmount,
-        },
-      },
-    });
+  if (existing.userId !== userId) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      "You do not have permission to update this paycheck"
+    );
   }
 
-  const totalBills = data.totalBills ?? existing.totalBills ?? 0;
-  const netIncome = data.amount ?? existing.amount ?? 0;
-  const allowance =
-    data.allowanceAmount ?? existing.allowanceTracker?.allowanceAmount ?? 0;
+  const coverageStart = data.coverageStart
+    ? new Date(data.coverageStart)
+    : existing.coverageStart;
+  const coverageEnd = data.coverageEnd
+    ? new Date(data.coverageEnd)
+    : existing.coverageEnd;
 
-  const savingsTarget = netIncome - totalBills - allowance;
+  if (coverageEnd <= coverageStart) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Coverage end date must be after coverage start date"
+    );
+  }
+
+  const overlapping = await prisma.paycheck.findFirst({
+    where: {
+      userId,
+      id: { not: id },
+      AND: [
+        { coverageStart: { lte: coverageEnd } },
+        { coverageEnd: { gte: coverageStart } },
+      ],
+    },
+  });
+
+  if (overlapping) {
+    throw new ApiError(
+      StatusCodes.BAD_REQUEST,
+      "Overlapping coverage period with another paycheck"
+    );
+  }
 
   const updated = await prisma.paycheck.update({
     where: { id },
     data: {
-      ...data,
-      allowanceAmount: allowance,
-      savingsTarget,
+      amount: data.amount ?? existing.amount,
+      paycheckDate: data.paycheckDate
+        ? new Date(data.paycheckDate)
+        : existing.paycheckDate,
+      frequency: data.frequency ?? existing.frequency,
+      coverageStart,
+      coverageEnd,
+      month: data.month ?? existing.month,
+      year: data.year ?? existing.year,
     },
-    include: { allowanceTracker: true },
   });
 
-  return { updated };
+  return updated;
 };
 
 const deletePaycheck = async (req: Request) => {
-  await prisma.paycheck.delete({ where: { id: req.params.id } });
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  const existing = await prisma.paycheck.findUnique({
+    where: { id },
+    include: {
+      allowanceTracker: {
+        select: { id: true },
+      },
+      bills: {
+        select: { id: true },
+      },
+    },
+  });
+
+  if (!existing) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Paycheck not found");
+  }
+
+  if (existing.userId !== userId) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      "You do not have permission to delete this paycheck"
+    );
+  }
+
+  if (!existing) {
+    throw new ApiError(StatusCodes.NOT_FOUND, "Paycheck not found");
+  }
+
+  if (existing.userId !== userId) {
+    throw new ApiError(
+      StatusCodes.FORBIDDEN,
+      "You do not have permission to delete this paycheck"
+    );
+  }
+  await prisma.$transaction(async (tx) => {
+    if (existing.allowanceTracker) {
+      await tx.allowanceTransaction.deleteMany({
+        where: { allowanceId: existing.allowanceTracker.id },
+      });
+      await tx.allowanceTracker.delete({
+        where: { id: existing.allowanceTracker.id },
+      });
+    }
+
+    if (existing.bills && existing.bills.length > 0) {
+      const billIds = existing.bills.map((bill) => bill.id);
+      await tx.bill.deleteMany({
+        where: { id: { in: billIds } },
+      });
+    }
+
+    await tx.paycheck.delete({
+      where: { id },
+    });
+  });
+
+  return true;
 };
 
 export const PaycheckServices = {

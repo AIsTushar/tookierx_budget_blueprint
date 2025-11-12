@@ -66,7 +66,6 @@ const createBill = async (req: Request) => {
     where: { id: paycheckId },
     data: {
       totalBills: updatedTotalBills,
-      savingsTarget: updatedSavings,
     },
   });
 
@@ -160,7 +159,6 @@ const updateBill = async (req: Request) => {
     where: { id: paycheck.id },
     data: {
       totalBills: updatedTotalBills,
-      savingsTarget: updatedSavings,
     },
   });
 
@@ -206,7 +204,6 @@ const deleteBill = async (req: Request) => {
     where: { id: paycheck.id },
     data: {
       totalBills,
-      savingsTarget,
     },
   });
 
