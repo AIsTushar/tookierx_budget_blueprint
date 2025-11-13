@@ -23,8 +23,11 @@ route.put(
 route.put(
   "/me",
   auth(Role.USER || Role.ADMIN),
+  validateRequest(UserValidation.updateValidation),
   userController.updateUserController
 );
 route.get("/me", auth(), userController.getMyProfileController);
+
+route.post("/send-message", auth(), userController.sendMessageController);
 
 export const userRoutes = route;

@@ -4,6 +4,7 @@ import { StatusCodes } from "http-status-codes";
 import { compare, hash } from "bcrypt";
 import { OTPFn } from "../../helper/OTPFn";
 import { prisma } from "../../../utils/prisma";
+import { sendMessageToAdmin } from "../../helper/email/emails";
 
 const createUserIntoDB = async (payload: User) => {
   const findUser = await prisma.user.findUnique({
@@ -108,8 +109,10 @@ const getMyProfile = async (id: string) => {
       name: true,
       email: true,
       role: true,
-      createdAt: true,
-      updatedAt: true,
+      yearlySalary: true,
+      netPay: true,
+      frequency: true,
+      status: true,
 
       subscriptionUser: {
         select: {
@@ -132,12 +135,20 @@ const getMyProfile = async (id: string) => {
     name: user.name,
     email: user.email,
     role: user.role,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    yearlySalary: user.yearlySalary,
+    netPay: user.netPay,
+    frequency: user.frequency,
+    status: user.status,
     subscriptionDetails: user.subscriptionUser,
   };
 
   return result;
+};
+
+const sendMessage = async (req: any) => {
+  const body = req.body;
+  await sendMessageToAdmin(body);
+  return true;
 };
 
 export const userServices = {
@@ -145,4 +156,5 @@ export const userServices = {
   updateUserIntoDB,
   changePasswordIntoDB,
   getMyProfile,
+  sendMessage,
 };

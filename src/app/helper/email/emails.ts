@@ -1,7 +1,11 @@
 import { stripe } from "../../../config/stripe";
 import { prisma } from "../../../utils/prisma";
 import { transporter, ADMIN_EMAIL, COMPANY_NAME } from "./config";
-import { generateAccountLinkEmail, otpEmailTemplate } from "./emailTemplates";
+import {
+  contactAdminEmailTemplate,
+  generateAccountLinkEmail,
+  otpEmailTemplate,
+} from "./emailTemplates";
 
 export const sendEmailFn = async (email: string, otp: number) => {
   const findUser = await prisma.user.findUnique({
@@ -46,4 +50,38 @@ export const StripeConnectAccEmail = async (user: any) => {
   };
 
   await transporter.sendMail(mailOptions);
+};
+
+interface ContactAdminEmail {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
+export const sendMessageToAdmin = async (
+  body: ContactAdminEmail
+): Promise<void> => {
+  try {
+    const htmlContent = contactAdminEmailTemplate(
+      body.name,
+      body.email,
+      body.subject,
+      body.message,
+      COMPANY_NAME
+    );
+
+    const mailOptions = {
+      from: `"${COMPANY_NAME} Notifications" <${ADMIN_EMAIL}>`,
+      to: ADMIN_EMAIL,
+      subject: `New Message from ${body.name} - ${body.subject}`,
+      html: htmlContent,
+      replyTo: body.email,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Failed to send message to admin:", error);
+    throw new Error("Failed to send message to admin.");
+  }
 };

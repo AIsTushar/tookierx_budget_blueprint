@@ -56,3 +56,44 @@ export const generateAccountLinkEmail = (name: string, url: string) => `
   </p>
 </div>
 `;
+
+export const contactAdminEmailTemplate = (
+  name: string,
+  email: string,
+  subject: string,
+  message: string,
+  companyName: string
+): string => {
+  return `
+  <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: auto; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); background-color: #ffffff; border: 1px solid #e0e0e0;">
+    <h2 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">📩 New Message from Contact Form</h2>
+
+    <p style="font-size: 16px; color: #555;">
+      Hello <strong>Admin</strong>,
+    </p>
+
+    <p style="font-size: 16px; color: #555;">You have received a new message from the website contact form. Below are the details:</p>
+
+    <div style="background-color: #f9f9f9; border-radius: 10px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 5px 0; font-size: 15px; color: #333;"><strong>Name:</strong> ${name}</p>
+      <p style="margin: 5px 0; font-size: 15px; color: #333;"><strong>Email:</strong> ${email}</p>
+      <p style="margin: 5px 0; font-size: 15px; color: #333;"><strong>Subject:</strong> ${subject}</p>
+      <p style="margin-top: 15px; font-size: 15px; color: #333;"><strong>Message:</strong></p>
+      <p style="background-color: #fff; border-left: 4px solid #3498db; padding: 12px 15px; border-radius: 5px; margin-top: 5px; color: #555; line-height: 1.6;">
+        ${message}
+      </p>
+    </div>
+
+    <p style="font-size: 15px; color: #555;">Please respond to this message at your earliest convenience.</p>
+
+    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+
+    <p style="font-size: 15px; color: #555;">Best regards,</p>
+    <p style="font-size: 15px; color: #3498db; font-weight: bold;">${name} System</p>
+
+    <p style="font-size: 12px; color: #999; margin-top: 30px; text-align: center; line-height: 1.5;">
+      This is an automated notification from <strong>${companyName}</strong>. Please do not reply directly to this email.
+    </p>
+  </div>
+  `;
+};

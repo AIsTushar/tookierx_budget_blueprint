@@ -9,10 +9,12 @@ const createValidation = z.object({
 
 const updateValidation = z.object({
   name: z.string().optional(),
-  email: z.string().email("Invalid email").optional(),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters long")
+  yearlySalary: z.number().optional(),
+  netPay: z.number().optional(),
+  frequency: z
+    .enum(["WEEKLY", "BIWEEKLY"], {
+      invalid_type_error: "Frequency must be one of WEEKLY, BIWEEKLY",
+    })
     .optional(),
 });
 
