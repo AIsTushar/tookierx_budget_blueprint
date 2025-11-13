@@ -11,6 +11,10 @@ router
   .get(auth(), AllowanceTrackerControllers.getLatestAllowanceTracker);
 
 router
+  .route("/get-all-allowance-transactions")
+  .get(auth(), AllowanceTrackerControllers.getAllAllowanceTransactions);
+
+router
   .route("/:id")
   .get(auth(), AllowanceTrackerControllers.getAllowanceTrackerById)
   .put(

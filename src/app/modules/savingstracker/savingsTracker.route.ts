@@ -15,6 +15,10 @@ router
   .get(auth(), SavingsTrackerControllers.getSavingsTrackers);
 
 router
+  .route("/get-all-savings-transactions")
+  .get(auth(), SavingsTrackerControllers.getAllSavingsTransactions);
+
+router
   .route("/:id")
   .get(auth(), SavingsTrackerControllers.getSavingsTrackerById)
   .put(

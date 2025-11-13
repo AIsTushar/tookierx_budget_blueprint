@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 
 // Fields for basic filtering
 export const savingsTrackerFilterFields = [];
+export const savingsTransactionFilterFields = ["isCleared", "type"];
 
 // Fields for top-level search
 export const savingsTrackerSearchFields = [];

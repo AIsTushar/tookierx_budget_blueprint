@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 
 // Fields for basic filtering
 export const allowanceTrackerFilterFields = [];
+export const allowanceTransactionFilterFields = ["isCleared", "type"];
 
 // Fields for top-level search
 export const allowanceTrackerSearchFields = [];
@@ -13,6 +14,9 @@ export const allowanceTrackerNestedFilters: NestedFilter[] = [
   // { key: "user", searchOption: "search", queryFields: ["name"] },
   { key: "paycheck", searchOption: "enum", queryFields: ["month"] },
   { key: "paycheck", searchOption: "exact", queryFields: ["year"] },
+];
+export const allowanceTransactionNestedFilters: NestedFilter[] = [
+  // { key: "user", searchOption: "search", queryFields: ["name"] },
 ];
 
 // Array-based filtering

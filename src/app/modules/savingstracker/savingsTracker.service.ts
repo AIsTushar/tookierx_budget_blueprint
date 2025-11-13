@@ -6,6 +6,7 @@ import {
   savingsTrackerRangeFilter,
   savingsTrackerSearchFields,
   savingsTrackerSelect,
+  savingsTransactionFilterFields,
 } from "./savingsTracker.constant";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../error/ApiErrors";
@@ -369,6 +370,22 @@ const deleteTransactionById = async (req: Request) => {
   return transaction;
 };
 
+const getAllSavingsTransactions = async (req: Request) => {
+  const userId = req.user?.id;
+  const queryBuilder = new QueryBuilder(req.query, prisma.savingsTransaction, {
+    savings: {
+      userId: userId,
+    },
+  });
+  const results = await queryBuilder
+    .filter(savingsTransactionFilterFields)
+    .paginate()
+    .execute();
+
+  const meta = await queryBuilder.countTotal();
+  return { data: results, meta };
+};
+
 export const SavingsTrackerServices = {
   getSavingsTrackers,
   getSavingsTrackerById,
@@ -380,4 +397,5 @@ export const SavingsTrackerServices = {
   getTransactionById,
   updateTransactionById,
   deleteTransactionById,
+  getAllSavingsTransactions,
 };

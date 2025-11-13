@@ -89,6 +89,19 @@ const deleteTransactionById = catchAsync(async (req, res) => {
   });
 });
 
+const getAllAllowanceTransactions = catchAsync(async (req, res) => {
+  const result = await AllowanceTrackerServices.getAllAllowanceTransactions(
+    req
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Transactions retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 export const AllowanceTrackerControllers = {
   getAllowanceTrackers,
   getLatestAllowanceTracker,
@@ -98,4 +111,5 @@ export const AllowanceTrackerControllers = {
   getTransactionById,
   updateTransactionById,
   deleteTransactionById,
+  getAllAllowanceTransactions,
 };

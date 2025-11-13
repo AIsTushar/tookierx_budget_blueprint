@@ -98,6 +98,17 @@ const deleteTransactionById = catchAsync(async (req, res) => {
   });
 });
 
+const getAllSavingsTransactions = catchAsync(async (req, res) => {
+  const data = await SavingsTrackerServices.getAllSavingsTransactions(req);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Transactions retrieved successfully",
+    data: data.data,
+    meta: data.meta,
+  });
+});
+
 export const SavingsTrackerControllers = {
   getSavingsTrackers,
   getSavingsTrackerById,
@@ -105,6 +116,7 @@ export const SavingsTrackerControllers = {
   deleteSavingsTracker,
   createSavingsTracker,
 
+  getAllSavingsTransactions,
   addTransactionToSavingsTracker,
   getTransactionById,
   updateTransactionById,

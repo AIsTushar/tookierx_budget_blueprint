@@ -5,6 +5,8 @@ import {
   allowanceTrackerInclude,
   allowanceTrackerNestedFilters,
   allowanceTrackerSearchFields,
+  allowanceTransactionFilterFields,
+  allowanceTransactionNestedFilters,
 } from "./allowanceTracker.constant";
 
 import { StatusCodes } from "http-status-codes";
@@ -328,6 +330,29 @@ const deleteTransactionById = async (req: Request) => {
   return { message: "Transaction deleted successfully" };
 };
 
+const getAllAllowanceTransactions = async (req: Request) => {
+  const userId = req.user.id;
+
+  const queryBuilder = new QueryBuilder(
+    req.query,
+    prisma.allowanceTransaction,
+    {
+      allowance: {
+        userId: userId,
+      },
+    }
+  );
+
+  const result = await queryBuilder
+    .filter(allowanceTransactionFilterFields)
+    .paginate()
+    .execute();
+
+  const meta = await queryBuilder.countTotal();
+
+  return { data: result, meta };
+};
+
 export const AllowanceTrackerServices = {
   getAllowanceTrackers,
   getLatestAllowanceTracker,
@@ -337,4 +362,5 @@ export const AllowanceTrackerServices = {
   getTransactionById,
   updateTransactionById,
   deleteTransactionById,
+  getAllAllowanceTransactions,
 };
