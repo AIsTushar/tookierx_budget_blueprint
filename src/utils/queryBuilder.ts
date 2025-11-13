@@ -106,15 +106,13 @@ class QueryBuilder<T> {
 
   // Filter
   // Filter
+  // Filter
   filter(includeFeilds: string[] = []) {
     const queryObj = this.pick(includeFeilds);
-
-    // if (Object.keys(queryObj).length === 0) return this;
-
     const formattedFilters: Record<string, any> = {};
 
     // Define known boolean fields here
-    const booleanFields = ["isActive", "isPublished"];
+    const booleanFields = ["isActive", "isCleared"];
 
     for (const [key, value] of Object.entries(queryObj)) {
       if (typeof value === "string" && value.includes("[")) {
@@ -125,8 +123,9 @@ class QueryBuilder<T> {
         booleanFields.includes(key) &&
         (value === "true" || value === "false")
       ) {
-        // ✅ Convert known boolean strings to actual booleans
         formattedFilters[key] = value === "true";
+      } else if (!isNaN(Number(value)) && value.trim() !== "") {
+        formattedFilters[key] = Number(value);
       } else {
         formattedFilters[key] = value;
       }

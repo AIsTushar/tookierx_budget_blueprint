@@ -20,6 +20,8 @@ model User {
   longitude          Float?
   location           String?
   frequency          Frequency?
+  yearlySalary       Float?
+  netPay             Float?
   customerId         String?
   isVerified         Boolean    @default(false)
   createdAt          DateTime   @default(now())

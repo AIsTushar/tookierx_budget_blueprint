@@ -128,11 +128,88 @@ const getPaycheckById = async (id: string) => {
   return paycheck;
 };
 
-const getLatestPaycheck = async () => {
+const getLatestPaycheck = async (req: Request) => {
+  const userId = req.user?.id;
   const paycheck = await prisma.paycheck.findFirst({
+    where: { userId },
+    select: {
+      id: true,
+      paycheckDate: true,
+      amount: true,
+    },
     orderBy: { createdAt: "desc" },
   });
   return paycheck;
+};
+
+const getMonthlyOverview = async (req: Request) => {
+  const userId = req.user?.id;
+  const queryBuilder = new QueryBuilder(req.query, prisma.paycheck);
+  const data = await queryBuilder
+    .filter(paycheckFilterFields)
+    .select(paycheckSelect)
+    .fields()
+    .rawFilter({ userId })
+    .execute();
+
+  const summaryMap = new Map<
+    string,
+    {
+      year: number;
+      month: string;
+      totalPaycheck: number;
+      totalBills: number;
+      totalAllowance: number;
+      totalSavings: number;
+      billsPercentage?: number;
+      allowancePercentage?: number;
+      savingsPercentage?: number;
+    }
+  >();
+
+  for (const item of data) {
+    const key = `${item.year}-${item.month}`;
+    const existing = summaryMap.get(key) || {
+      year: item.year,
+      month: item.month,
+      totalPaycheck: 0,
+      totalBills: 0,
+      totalAllowance: 0,
+      totalSavings: 0,
+    };
+
+    existing.totalPaycheck += Number(item.amount) || 0;
+    existing.totalBills += Number(item.totalBills) || 0;
+    existing.totalAllowance += Number(item.allowanceAmount) || 0;
+    existing.totalSavings += Number(item.savingsAmount) || 0;
+
+    summaryMap.set(key, existing);
+  }
+
+  const summary = Array.from(summaryMap.values())
+    .map((item) => {
+      const { totalPaycheck, totalBills, totalAllowance, totalSavings } = item;
+
+      const billsPercentage =
+        totalPaycheck > 0 ? (totalBills / totalPaycheck) * 100 : 0;
+      const allowancePercentage =
+        totalPaycheck > 0 ? (totalAllowance / totalPaycheck) * 100 : 0;
+      const savingsPercentage =
+        totalPaycheck > 0 ? (totalSavings / totalPaycheck) * 100 : 0;
+
+      return {
+        ...item,
+        billsPercentage: Number(billsPercentage.toFixed(2)),
+        allowancePercentage: Number(allowancePercentage.toFixed(2)),
+        savingsPercentage: Number(savingsPercentage.toFixed(2)),
+      };
+    })
+    .sort((a, b) => {
+      if (b.year !== a.year) return b.year - a.year;
+      return a.month.localeCompare(b.month);
+    });
+
+  return { data: summary };
 };
 
 const updatePaycheck = async (req: Request) => {
@@ -281,6 +358,7 @@ export const PaycheckServices = {
   getPaychecks,
   getPaycheckById,
   getLatestPaycheck,
+  getMonthlyOverview,
   updatePaycheck,
   deletePaycheck,
   createPaycheck,

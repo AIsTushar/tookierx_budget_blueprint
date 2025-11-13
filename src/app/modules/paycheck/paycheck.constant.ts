@@ -3,7 +3,7 @@ import { rangeFilteringPrams } from "../../../utils/queryBuilder";
 import { Prisma } from "@prisma/client";
 
 // Fields for basic filtering
-export const paycheckFilterFields = [];
+export const paycheckFilterFields = ["month", "year"];
 
 // Fields for top-level search
 export const paycheckSearchFields = [];
@@ -41,6 +41,9 @@ export const paycheckSelect: Prisma.PaycheckSelect = {
   amount: true,
   paycheckDate: true,
   frequency: true,
+  totalBills: true,
+  allowanceAmount: true,
+  savingsAmount: true,
   coverageStart: true,
   coverageEnd: true,
 };

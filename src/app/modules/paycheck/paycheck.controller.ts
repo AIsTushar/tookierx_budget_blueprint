@@ -25,11 +25,21 @@ const getPaychecks = catchAsync(async (req, res) => {
 });
 
 const getLatestPaycheck = catchAsync(async (req, res) => {
-  const result = await PaycheckServices.getLatestPaycheck();
+  const result = await PaycheckServices.getLatestPaycheck(req);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,
     message: "Latest paycheck retrieved successfully",
+    data: result,
+  });
+});
+
+const getMonthlyOverview = catchAsync(async (req, res) => {
+  const result = await PaycheckServices.getMonthlyOverview(req);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "Monthly overview retrieved successfully",
     data: result,
   });
 });
@@ -68,6 +78,7 @@ export const PaycheckControllers = {
   getPaychecks,
   getPaycheckById,
   getLatestPaycheck,
+  getMonthlyOverview,
   updatePaycheck,
   deletePaycheck,
   createPaycheck,

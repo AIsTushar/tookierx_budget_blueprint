@@ -14,7 +14,10 @@ router
   )
   .get(auth(), PaycheckControllers.getPaychecks);
 
-router.route("/latest").get(PaycheckControllers.getLatestPaycheck);
+router.route("/latest").get(auth(), PaycheckControllers.getLatestPaycheck);
+router
+  .route("/monthly-overview")
+  .get(auth(), PaycheckControllers.getMonthlyOverview);
 
 router
   .route("/:id")
