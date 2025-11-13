@@ -134,16 +134,14 @@ model SavingsTracker {
 }
 
 model SavingsTransaction {
-  id             String          @id @default(auto()) @map("_id") @db.ObjectId
-  savingsId      String          @db.ObjectId
-  type           TransactionType
-  amount         Float
-  currentBalance Float           @default(0)
-  clearedBalance Float           @default(0)
-  description    String?
-  category       String?
-  date           DateTime        @default(now())
-  isCleared      Boolean         @default(false)
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  savingsId   String          @db.ObjectId
+  type        TransactionType
+  amount      Float
+  description String?
+  category    String?
+  date        DateTime        @default(now())
+  isCleared   Boolean         @default(false)
 
   savings SavingsTracker @relation(fields: [savingsId], references: [id])
 

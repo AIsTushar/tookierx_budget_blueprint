@@ -286,7 +286,7 @@ const updateTransactionById = async (req: Request) => {
   clearedBalanceChange += newBalanceChange; // Always
   if (newIsCleared) currentBalanceChange += newBalanceChange;
 
-  const updatedTransaction = await prisma.creditCardTransaction.update({
+  const updatedTransaction = await prisma.savingsTransaction.update({
     where: { id: transactionId },
     data: {
       type: newType,
@@ -297,7 +297,7 @@ const updateTransactionById = async (req: Request) => {
     },
   });
 
-  await prisma.creditCardTracker.update({
+  await prisma.savingsTracker.update({
     where: { id: transaction.savingsId },
     data: {
       currentBalance: { increment: currentBalanceChange },
@@ -354,10 +354,10 @@ const deleteTransactionById = async (req: Request) => {
   }
 
   await prisma.$transaction([
-    prisma.creditCardTransaction.delete({
+    prisma.savingsTransaction.delete({
       where: { id: transactionId },
     }),
-    prisma.creditCardTracker.update({
+    prisma.savingsTracker.update({
       where: { id: accountId },
       data: {
         currentBalance: { increment: currentBalanceChange },

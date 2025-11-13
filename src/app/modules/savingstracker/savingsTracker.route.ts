@@ -39,9 +39,7 @@ router
   .get(auth(), SavingsTrackerControllers.getTransactionById)
   .put(
     auth(),
-    validateRequest(
-      SavingsTrackerValidations.addTransactionToSavingsTrackerSchema
-    ),
+    validateRequest(SavingsTrackerValidations.updateTransactionByIdSchema),
     SavingsTrackerControllers.updateTransactionById
   )
   .delete(auth(), SavingsTrackerControllers.deleteTransactionById);
