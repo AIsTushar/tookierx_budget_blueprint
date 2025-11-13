@@ -12,6 +12,7 @@ const createCreditCardTracker = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
 const getCreditCardTrackers = catchAsync(async (req, res) => {
   const result = await CreditCardTrackerServices.getCreditCardTrackers(req);
   sendResponse(res, {

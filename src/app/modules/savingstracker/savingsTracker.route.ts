@@ -1,8 +1,6 @@
 import { Router } from "express";
 import { SavingsTrackerControllers } from "./savingsTracker.controller";
 import auth from "../../middleware/auth";
-import { Role } from "@prisma/client";
-import { parseBodyMiddleware } from "../../middleware/parseBodyData";
 import validateRequest from "../../middleware/validateRequest";
 import { SavingsTrackerValidations } from "./savingsTracker.validation";
 const router = Router();
@@ -25,5 +23,27 @@ router
     SavingsTrackerControllers.updateSavingsTracker
   )
   .delete(auth(), SavingsTrackerControllers.deleteSavingsTracker);
+
+router
+  .route("/:accountId/transactions")
+  .post(
+    auth(),
+    validateRequest(
+      SavingsTrackerValidations.addTransactionToSavingsTrackerSchema
+    ),
+    SavingsTrackerControllers.addTransactionToSavingsTracker
+  );
+
+router
+  .route("/:accountId/transactions/:transactionId")
+  .get(auth(), SavingsTrackerControllers.getTransactionById)
+  .put(
+    auth(),
+    validateRequest(
+      SavingsTrackerValidations.addTransactionToSavingsTrackerSchema
+    ),
+    SavingsTrackerControllers.updateTransactionById
+  )
+  .delete(auth(), SavingsTrackerControllers.deleteTransactionById);
 
 export const SavingsTrackerRoutes = router;

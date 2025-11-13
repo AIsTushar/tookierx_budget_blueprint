@@ -10,7 +10,6 @@ router
   .route("/")
   .post(
     auth(),
-    parseBodyMiddleware,
     validateRequest(CreditCardTrackerValidations.createCreditCardTrackerSchema),
     CreditCardTrackerControllers.createCreditCardTracker
   )
@@ -21,7 +20,6 @@ router
   .get(auth(), CreditCardTrackerControllers.getCreditCardTrackerById)
   .put(
     auth(),
-    parseBodyMiddleware,
     validateRequest(CreditCardTrackerValidations.updateCreditCardTrackerSchema),
     CreditCardTrackerControllers.updateCreditCardTracker
   )

@@ -127,7 +127,6 @@ model SavingsTracker {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // paycheck     Paycheck             @relation(fields: [paycheckId], references: [id])
   user         User                 @relation(fields: [userId], references: [id])
   transactions SavingsTransaction[]
 
@@ -135,20 +134,18 @@ model SavingsTracker {
 }
 
 model SavingsTransaction {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
-  savingsId String @db.ObjectId
-
-  type           TransactionType // CREDIT = saved money, DEBIT = withdrawal
+  id             String          @id @default(auto()) @map("_id") @db.ObjectId
+  savingsId      String          @db.ObjectId
+  type           TransactionType
   amount         Float
   currentBalance Float           @default(0)
   clearedBalance Float           @default(0)
   description    String?
   category       String?
-  payee          String?
   date           DateTime        @default(now())
   isCleared      Boolean         @default(false)
-  paycheckId     String?         @db.ObjectId
-  savings        SavingsTracker  @relation(fields: [savingsId], references: [id])
+
+  savings SavingsTracker @relation(fields: [savingsId], references: [id])
 
   @@map("savings_transactions")
 }

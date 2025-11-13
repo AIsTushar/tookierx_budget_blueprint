@@ -100,7 +100,7 @@ const getCreditCardTrackerById = async (req: Request) => {
 const updateCreditCardTracker = async (req: Request) => {
   const { id } = req.params;
   const { cardName } = req.body;
-  const user = req.user;
+  const userId = req.user.id;
 
   const whereClause: Prisma.CreditCardTrackerWhereUniqueInput = {
     id,
@@ -115,19 +115,21 @@ const updateCreditCardTracker = async (req: Request) => {
       `Credit Card not found with this id: ${id}`
     );
   }
-  if (existing.userId !== user?.id) {
+  if (existing.userId !== userId) {
     throw new ApiError(
       StatusCodes.FORBIDDEN,
       `You do not have permission to update this credit card tracker`
     );
   }
 
-  return prisma.creditCardTracker.update({
+  const result = await prisma.creditCardTracker.update({
     where: whereClause,
     data: {
       cardName,
     },
   });
+
+  return result;
 };
 
 const deleteCreditCardTracker = async (req: Request) => {
