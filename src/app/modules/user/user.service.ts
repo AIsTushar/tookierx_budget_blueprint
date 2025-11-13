@@ -5,6 +5,7 @@ import { compare, hash } from "bcrypt";
 import { OTPFn } from "../../helper/OTPFn";
 import { prisma } from "../../../utils/prisma";
 import { sendMessageToAdmin } from "../../helper/email/emails";
+import { Request } from "express";
 
 const createUserIntoDB = async (payload: User) => {
   const findUser = await prisma.user.findUnique({
@@ -113,16 +114,6 @@ const getMyProfile = async (id: string) => {
       netPay: true,
       frequency: true,
       status: true,
-
-      subscriptionUser: {
-        select: {
-          subscriptionId: true,
-          subscriptionStatus: true,
-          subscriptionStart: true,
-          subscriptionEnd: true,
-          cancelAtPeriodEnd: true,
-        },
-      },
     },
   });
 
@@ -130,24 +121,46 @@ const getMyProfile = async (id: string) => {
     throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
   }
 
-  const result = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    yearlySalary: user.yearlySalary,
-    netPay: user.netPay,
-    frequency: user.frequency,
-    status: user.status,
-    subscriptionDetails: user.subscriptionUser,
-  };
-
-  return result;
+  return user;
 };
 
 const sendMessage = async (req: any) => {
   const body = req.body;
   await sendMessageToAdmin(body);
+  return true;
+};
+
+const deleteUser = async (req: Request) => {
+  const userId = req.user?.id;
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.allowanceTransaction.deleteMany({
+      where: { allowance: { userId } },
+    });
+
+    await tx.allowanceTracker.deleteMany({ where: { userId } });
+
+    await tx.savingsTransaction.deleteMany({
+      where: { savings: { userId } },
+    });
+
+    await tx.savingsTracker.deleteMany({ where: { userId } });
+
+    await tx.creditCardTransaction.deleteMany({
+      where: { creditCard: { userId } },
+    });
+
+    await tx.creditCardTracker.deleteMany({ where: { userId } });
+
+    await tx.bill.deleteMany({
+      where: { paycheck: { userId } },
+    });
+
+    await tx.paycheck.deleteMany({ where: { userId } });
+
+    const user = await tx.user.delete({ where: { id: userId } });
+    return user;
+  });
+
   return true;
 };
 
@@ -157,4 +170,5 @@ export const userServices = {
   changePasswordIntoDB,
   getMyProfile,
   sendMessage,
+  deleteUser,
 };

@@ -105,8 +105,6 @@ class QueryBuilder<T> {
   }
 
   // Filter
-  // Filter
-  // Filter
   filter(includeFeilds: string[] = []) {
     const queryObj = this.pick(includeFeilds);
     const formattedFilters: Record<string, any> = {};
@@ -162,12 +160,6 @@ class QueryBuilder<T> {
               },
             };
 
-            console.log(condition, " check nested search query");
-            console.log(pathSegments, " check nested search query");
-            console.log(
-              this.buildNestedCondition(pathSegments, condition),
-              " check nested search query"
-            );
             return this.buildNestedCondition(pathSegments, condition);
           });
 
@@ -197,15 +189,21 @@ class QueryBuilder<T> {
 
         const nestedConditions = Object.entries(queryObj).map(
           ([field, value]) => {
-            console.log(field, value, " check nested filter query");
             let condition: Record<string, any> = {};
+
+            // detect if value should be number
+            const isNumberField = ["year"].includes(field);
 
             switch (searchOption) {
               case "enum":
-                condition = { [field]: { equals: value } };
+                condition = {
+                  [field]: { equals: isNumberField ? Number(value) : value },
+                };
                 break;
               case "exact":
-                condition = { [field]: { equals: value, mode: "insensitive" } };
+                condition = isNumberField
+                  ? { [field]: { equals: Number(value) } }
+                  : { [field]: { equals: value, mode: "insensitive" } };
                 break;
               default:
                 condition = {
@@ -216,6 +214,7 @@ class QueryBuilder<T> {
             return this.buildNestedCondition(pathSegments, condition);
           }
         );
+
         this.prismaQuery.where = {
           ...this.prismaQuery?.where,
           AND: [...AndConditions, ...nestedConditions],

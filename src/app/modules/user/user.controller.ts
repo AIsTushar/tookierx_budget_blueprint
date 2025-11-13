@@ -67,10 +67,21 @@ const sendMessageController = catchAsync(
   }
 );
 
+const deleteUserController = catchAsync(async (req: Request, res: Response) => {
+  const result = await userServices.deleteUser(req);
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    message: "User deleted successfully",
+    data: null,
+    success: true,
+  });
+});
+
 export const userController = {
   createUserController,
   updateUserController,
   changePasswordController,
   getMyProfileController,
   sendMessageController,
+  deleteUserController,
 };

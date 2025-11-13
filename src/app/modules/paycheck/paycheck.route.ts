@@ -27,6 +27,6 @@ router
     validateRequest(PaycheckValidations.updatePaycheckSchema),
     PaycheckControllers.updatePaycheck
   )
-  .delete(PaycheckControllers.deletePaycheck);
+  .delete(auth(), PaycheckControllers.deletePaycheck);
 
 export const PaycheckRoutes = router;

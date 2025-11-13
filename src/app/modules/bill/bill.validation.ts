@@ -9,9 +9,10 @@ const createBillSchema = z.object({
       invalid_type_error: "Amount must be a number",
     })
     .positive("Amount must be greater than 0"),
-  dueDate: z
-    .string()
-    .datetime({ message: "Invalid date format. Must be an ISO date string." }),
+  dueDate: z.string({
+    required_error: "Due date is required",
+  }),
+
   notes: z.string().optional(),
 });
 const updateBillSchema = z.object({
@@ -24,8 +25,9 @@ const updateBillSchema = z.object({
     .positive("Amount must be greater than 0")
     .optional(),
   dueDate: z
-    .string()
-    .datetime({ message: "Invalid date format. Must be an ISO date string." })
+    .string({
+      required_error: "Due date is required",
+    })
     .optional(),
   notes: z.string().optional(),
 });

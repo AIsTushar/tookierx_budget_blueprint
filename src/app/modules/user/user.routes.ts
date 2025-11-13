@@ -29,5 +29,6 @@ route.put(
 route.get("/me", auth(), userController.getMyProfileController);
 
 route.post("/send-message", auth(), userController.sendMessageController);
+route.delete("/delete", auth(), userController.deleteUserController);
 
 export const userRoutes = route;

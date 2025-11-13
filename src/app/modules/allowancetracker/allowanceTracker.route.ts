@@ -5,14 +5,14 @@ import validateRequest from "../../middleware/validateRequest";
 import { AllowanceTrackerValidations } from "./allowanceTracker.validation";
 const router = Router();
 
-router.route("/").get(AllowanceTrackerControllers.getAllowanceTrackers);
+router.route("/").get(auth(), AllowanceTrackerControllers.getAllowanceTrackers);
 router
   .route("/latest")
   .get(auth(), AllowanceTrackerControllers.getLatestAllowanceTracker);
 
 router
   .route("/:id")
-  .get(AllowanceTrackerControllers.getAllowanceTrackerById)
+  .get(auth(), AllowanceTrackerControllers.getAllowanceTrackerById)
   .put(
     auth(),
     validateRequest(AllowanceTrackerValidations.updateAllowanceTrackerSchema),

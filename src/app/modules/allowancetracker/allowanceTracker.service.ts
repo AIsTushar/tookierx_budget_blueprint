@@ -2,14 +2,9 @@ import { Request } from "express";
 import { prisma } from "../../../utils/prisma";
 import QueryBuilder from "../../../utils/queryBuilder";
 import {
-  allowanceTrackerFilterFields,
   allowanceTrackerInclude,
   allowanceTrackerNestedFilters,
-  allowanceTrackerRangeFilter,
   allowanceTrackerSearchFields,
-  allowanceTrackerMultiSelectNestedArrayFilters,
-  allowanceTrackerArrayFilterFields,
-  allowanceTrackerSelect,
 } from "./allowanceTracker.constant";
 
 import { StatusCodes } from "http-status-codes";
@@ -21,9 +16,11 @@ const getAllowanceTrackers = async (req: Request) => {
   const queryBuilder = new QueryBuilder(req.query, prisma.allowanceTracker);
   const results = await queryBuilder
     .search(allowanceTrackerSearchFields)
+    .nestedFilter(allowanceTrackerNestedFilters)
     .filter()
     .paginate()
     .sort()
+    .include(allowanceTrackerInclude)
     .rawFilter({ userId })
     .execute();
 

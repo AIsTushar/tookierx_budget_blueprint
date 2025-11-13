@@ -27,8 +27,8 @@ model User {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  receiver           Notifications[]     @relation("receiverDetails")
-  sender             Notifications[]     @relation("senderDetails")
+  // receiver           Notifications[]     @relation("receiverDetails")
+  // sender             Notifications[]     @relation("senderDetails")
   subscriptionUser   SubscriptionUser?
   paychecks          Paycheck[]
   allowanceTrackers  AllowanceTracker[]
@@ -231,18 +231,18 @@ model SubscriptionUser {
   @@map("subscriptionUsers")
 }
 
-model Notifications {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  receiverId String   @db.ObjectId
-  senderId   String?  @db.ObjectId
-  title      String
-  body       String
-  read       Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  receiver   User     @relation("receiverDetails", fields: [receiverId], references: [id])
-  sender     User?    @relation("senderDetails", fields: [senderId], references: [id])
-}
+// model Notifications {
+//   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+//   receiverId String   @db.ObjectId
+//   senderId   String?  @db.ObjectId
+//   title      String
+//   body       String
+//   read       Boolean  @default(false)
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
+//   receiver   User     @relation("receiverDetails", fields: [receiverId], references: [id])
+//   sender     User?    @relation("senderDetails", fields: [senderId], references: [id])
+// }
 
 enum Role {
   USER

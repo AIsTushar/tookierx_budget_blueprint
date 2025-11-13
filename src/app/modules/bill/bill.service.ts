@@ -60,7 +60,16 @@ const createBill = async (req: Request) => {
     );
   }
 
-  const bill = await prisma.bill.create({ data: payload });
+  const bill = await prisma.bill.create({
+    data: {
+      paycheckId,
+      name: payload.name,
+      amount: payload.amount,
+      dueDate: new Date(payload.dueDate),
+      notes: payload.notes,
+    },
+  });
+
   const updatedTotalBills = paycheck.totalBills + payload.amount;
 
   const updatedSavings =

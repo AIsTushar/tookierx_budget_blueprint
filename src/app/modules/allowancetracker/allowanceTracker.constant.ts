@@ -1,6 +1,6 @@
-
 import { NestedFilter } from "../../interface/nestedFiltering";
 import { rangeFilteringPrams } from "../../../utils/queryBuilder";
+import { Prisma } from "@prisma/client";
 
 // Fields for basic filtering
 export const allowanceTrackerFilterFields = [];
@@ -10,8 +10,9 @@ export const allowanceTrackerSearchFields = [];
 
 // Nested filtering config
 export const allowanceTrackerNestedFilters: NestedFilter[] = [
-	// { key: "user", searchOption: "search", queryFields: ["name"] },
-
+  // { key: "user", searchOption: "search", queryFields: ["name"] },
+  { key: "paycheck", searchOption: "enum", queryFields: ["month"] },
+  { key: "paycheck", searchOption: "exact", queryFields: ["year"] },
 ];
 
 // Array-based filtering
@@ -28,20 +29,24 @@ export const allowanceTrackerMultiSelectNestedArrayFilters = [
 
 // Range-based filtering config
 export const allowanceTrackerRangeFilter: rangeFilteringPrams[] = [
-	{
-		field: "createdAt",
-		maxQueryKey: "maxDate",
-		minQueryKey: "minDate",
-		dataType: "date",
-	},
+  {
+    field: "createdAt",
+    maxQueryKey: "maxDate",
+    minQueryKey: "minDate",
+    dataType: "date",
+  },
 ];
 
 // Prisma select configuration
-export const allowanceTrackerSelect = {
- 
-};
+export const allowanceTrackerSelect = {};
 
 // Prisma include configuration
-export const allowanceTrackerInclude = {
-	
+export const allowanceTrackerInclude: Prisma.AllowanceTrackerInclude = {
+  paycheck: {
+    select: {
+      id: true,
+      month: true,
+      year: true,
+    },
+  },
 };

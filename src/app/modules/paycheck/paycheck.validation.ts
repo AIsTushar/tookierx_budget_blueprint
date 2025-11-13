@@ -8,13 +8,9 @@ const createPaycheckSchema = z.object({
     })
     .positive("Amount must be greater than 0"),
 
-  paycheckDate: z
-    .string({
-      required_error: "Paycheck date is required",
-    })
-    .refine((val) => !isNaN(Date.parse(val)), {
-      message: "Paycheck date must be a valid date",
-    }),
+  paycheckDate: z.string({
+    required_error: "Paycheck date is required",
+  }),
 
   frequency: z.enum(["WEEKLY", "BIWEEKLY"], {
     required_error: "Frequency is required",
@@ -28,35 +24,6 @@ const createPaycheckSchema = z.object({
   coverageEnd: z.string({
     required_error: "Coverage end date is required",
   }),
-
-  month: z.enum(
-    [
-      "JANUARY",
-      "FEBRUARY",
-      "MARCH",
-      "APRIL",
-      "MAY",
-      "JUNE",
-      "JULY",
-      "AUGUST",
-      "SEPTEMBER",
-      "OCTOBER",
-      "NOVEMBER",
-      "DECEMBER",
-    ],
-    {
-      required_error: "Month is required",
-      invalid_type_error:
-        "Month must be one of JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER",
-    }
-  ),
-
-  year: z
-    .number({
-      required_error: "Year is required",
-      invalid_type_error: "Year must be a number",
-    })
-    .int("Year must be an integer"),
 });
 
 const updatePaycheckSchema = z.object({
@@ -94,38 +61,6 @@ const updatePaycheckSchema = z.object({
     .string({
       required_error: "Coverage end date is required",
     })
-    .optional(),
-
-  month: z
-    .enum(
-      [
-        "JANUARY",
-        "FEBRUARY",
-        "MARCH",
-        "APRIL",
-        "MAY",
-        "JUNE",
-        "JULY",
-        "AUGUST",
-        "SEPTEMBER",
-        "OCTOBER",
-        "NOVEMBER",
-        "DECEMBER",
-      ],
-      {
-        required_error: "Month is required",
-        invalid_type_error:
-          "Month must be one of JANUARY, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER",
-      }
-    )
-    .optional(),
-
-  year: z
-    .number({
-      required_error: "Year is required",
-      invalid_type_error: "Year must be a number",
-    })
-    .int("Year must be an integer")
     .optional(),
 
   notes: z.string().optional(),

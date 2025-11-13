@@ -67,7 +67,7 @@ const updatePaycheck = catchAsync(async (req, res) => {
 const deletePaycheck = catchAsync(async (req, res) => {
   await PaycheckServices.deletePaycheck(req);
   sendResponse(res, {
-    statusCode: StatusCodes.NO_CONTENT,
+    statusCode: StatusCodes.OK,
     success: true,
     message: "Paycheck deleted successfully",
     data: null,

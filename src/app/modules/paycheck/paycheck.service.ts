@@ -10,16 +10,21 @@ import {
 } from "./paycheck.constant";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../error/ApiErrors";
+import { getYear, parseISO, format } from "date-fns";
+import { Month } from "@prisma/client";
 
 const createPaycheck = async (req: Request) => {
   const payload = req.body;
   const userId = req.user?.id;
-  if (userId) {
-    payload.userId = userId;
+
+  if (!userId) {
+    throw new ApiError(StatusCodes.UNAUTHORIZED, "User not found");
   }
 
-  const coverageStart = new Date(payload.coverageStart);
-  const coverageEnd = new Date(payload.coverageEnd);
+  // Parse coverage dates
+  const coverageStart = parseISO(payload.coverageStart);
+  const coverageEnd = parseISO(payload.coverageEnd);
+
   if (coverageEnd <= coverageStart) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
@@ -27,37 +32,35 @@ const createPaycheck = async (req: Request) => {
     );
   }
 
-  // check if user has another paycheck with overlapping coverage period
+  const year = getYear(coverageStart);
+  const monthStr = format(coverageStart, "MMMM").toUpperCase();
+  const month: Month = Month[monthStr as keyof typeof Month];
+
+  // Check overlapping paychecks
   const overlappingPaycheck = await prisma.paycheck.findFirst({
     where: {
-      userId: userId,
+      userId,
       AND: [
-        {
-          coverageStart: {
-            lte: coverageEnd,
-          },
-        },
-        {
-          coverageEnd: {
-            gte: coverageStart,
-          },
-        },
+        { coverageStart: { lte: coverageEnd } },
+        { coverageEnd: { gte: coverageStart } },
       ],
     },
   });
+
   if (overlappingPaycheck) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       "Overlapping coverage period with another paycheck"
     );
   }
-  //prevent duplicate paycheck for same coverage period
+
+  // Prevent duplicate paycheck for exact same coverage period
   const existingPaycheck = await prisma.paycheck.findUnique({
     where: {
       userId_coverageStart_coverageEnd: {
-        userId: userId,
-        coverageStart: coverageStart,
-        coverageEnd: coverageEnd,
+        userId,
+        coverageStart,
+        coverageEnd,
       },
     },
   });
@@ -69,14 +72,15 @@ const createPaycheck = async (req: Request) => {
     );
   }
 
+  // Transaction: create paycheck + allowance tracker
   const result = await prisma.$transaction(async (tx) => {
     const paycheck = await tx.paycheck.create({
       data: {
         userId,
         amount: payload.amount,
-        month: payload.month,
-        year: payload.year,
-        paycheckDate: new Date(payload.paycheckDate),
+        month,
+        year,
+        paycheckDate: parseISO(payload.paycheckDate),
         coverageStart,
         coverageEnd,
         frequency: payload.frequency,
@@ -95,6 +99,7 @@ const createPaycheck = async (req: Request) => {
 
     return paycheck;
   });
+
   return result;
 };
 
@@ -132,11 +137,7 @@ const getLatestPaycheck = async (req: Request) => {
   const userId = req.user?.id;
   const paycheck = await prisma.paycheck.findFirst({
     where: { userId },
-    select: {
-      id: true,
-      paycheckDate: true,
-      amount: true,
-    },
+    include: paycheckInclude,
     orderBy: { createdAt: "desc" },
   });
   return paycheck;
@@ -242,10 +243,10 @@ const updatePaycheck = async (req: Request) => {
   }
 
   const coverageStart = data.coverageStart
-    ? new Date(data.coverageStart)
+    ? parseISO(data.coverageStart)
     : existing.coverageStart;
   const coverageEnd = data.coverageEnd
-    ? new Date(data.coverageEnd)
+    ? parseISO(data.coverageEnd)
     : existing.coverageEnd;
 
   if (coverageEnd <= coverageStart) {
@@ -254,6 +255,10 @@ const updatePaycheck = async (req: Request) => {
       "Coverage end date must be after coverage start date"
     );
   }
+
+  const year = getYear(coverageStart);
+  const monthStr = format(coverageStart, "MMMM").toUpperCase();
+  const month: Month = Month[monthStr as keyof typeof Month];
 
   const overlapping = await prisma.paycheck.findFirst({
     where: {
@@ -283,8 +288,8 @@ const updatePaycheck = async (req: Request) => {
       frequency: data.frequency ?? existing.frequency,
       coverageStart,
       coverageEnd,
-      month: data.month ?? existing.month,
-      year: data.year ?? existing.year,
+      month: month ? month : existing.month,
+      year: year ? year : existing.year,
       notes: data.notes ?? existing.notes,
     },
   });
