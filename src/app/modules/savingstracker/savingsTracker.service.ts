@@ -59,15 +59,28 @@ const getSavingsTrackers = async (req: Request) => {
   return { data: { results, totalBalance, totalClearedBalance }, meta };
 };
 
-const getSavingsTrackerById = async (id: string) => {
+const getSavingsTrackerById = async (req: Request) => {
+  const userId = req.user?.id;
+  const id = req.params.id;
+
+  const { type, isCleared } = req.query;
+  const transactionFilter: any = {};
+  if (type) {
+    transactionFilter.type = type.toString().toUpperCase(); // CREDIT / DEBIT
+  }
+  if (isCleared !== undefined) {
+    transactionFilter.isCleared = isCleared === "true";
+  }
+
   const result = await prisma.savingsTracker.findUnique({
-    where: { id },
+    where: { id, userId },
     select: {
       id: true,
       accountName: true,
       currentBalance: true,
       clearedBalance: true,
       transactions: {
+        where: transactionFilter,
         select: {
           id: true,
           type: true,

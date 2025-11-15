@@ -6,6 +6,7 @@ import {
   creditCardTrackerRangeFilter,
   creditCardTrackerSearchFields,
   creditCardTrackerSelect,
+  creditCardTransactionFilterFields,
 } from "./creditCardTracker.constant";
 import { StatusCodes } from "http-status-codes";
 import ApiError from "../../error/ApiErrors";
@@ -70,6 +71,19 @@ const getCreditCardTrackers = async (req: Request) => {
 const getCreditCardTrackerById = async (req: Request) => {
   const { id } = req.params;
   const userId = req.user.id;
+
+  const { type, isCleared } = req.query;
+
+  const transactionFilter: any = {};
+
+  if (type) {
+    transactionFilter.type = type.toString().toUpperCase(); // CREDIT / DEBIT
+  }
+
+  if (isCleared !== undefined) {
+    transactionFilter.isCleared = isCleared === "true";
+  }
+
   const result = await prisma.creditCardTracker.findUnique({
     where: { id, userId },
     select: {
@@ -78,6 +92,7 @@ const getCreditCardTrackerById = async (req: Request) => {
       currentBalance: true,
       clearedBalance: true,
       transactions: {
+        where: transactionFilter,
         select: {
           id: true,
           type: true,
@@ -362,6 +377,29 @@ const deleteTransactionById = async (req: Request) => {
   return transaction;
 };
 
+const getAllCreditCardTransactions = async (req: Request) => {
+  const userId = req.user?.id;
+
+  const queryBuilder = new QueryBuilder(
+    req.query,
+    prisma.creditCardTransaction,
+    {
+      creditCard: {
+        userId: userId,
+      },
+    }
+  );
+
+  const result = await queryBuilder
+    .filter(creditCardTransactionFilterFields)
+    .paginate()
+    .execute();
+
+  const meta = await queryBuilder.countTotal();
+
+  return { data: result, meta };
+};
+
 export const CreditCardTrackerServices = {
   getCreditCardTrackers,
   getCreditCardTrackerById,
@@ -373,4 +411,5 @@ export const CreditCardTrackerServices = {
   getTransactionById,
   updateTransactionById,
   deleteTransactionById,
+  getAllCreditCardTransactions,
 };

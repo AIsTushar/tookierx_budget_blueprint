@@ -16,6 +16,10 @@ router
   .get(auth(), CreditCardTrackerControllers.getCreditCardTrackers);
 
 router
+  .route("/get-all-credit-card-transactions")
+  .get(auth(), CreditCardTrackerControllers.getAllCreditCardTransactions);
+
+router
   .route("/:id")
   .get(auth(), CreditCardTrackerControllers.getCreditCardTrackerById)
   .put(

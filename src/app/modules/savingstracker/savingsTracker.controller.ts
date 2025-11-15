@@ -24,9 +24,7 @@ const getSavingsTrackers = catchAsync(async (req, res) => {
 });
 
 const getSavingsTrackerById = catchAsync(async (req, res) => {
-  const result = await SavingsTrackerServices.getSavingsTrackerById(
-    req.params.id
-  );
+  const result = await SavingsTrackerServices.getSavingsTrackerById(req);
   sendResponse(res, {
     statusCode: StatusCodes.OK,
     success: true,

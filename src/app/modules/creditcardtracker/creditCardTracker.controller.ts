@@ -54,6 +54,19 @@ const deleteCreditCardTracker = catchAsync(async (req, res) => {
   });
 });
 
+const getAllCreditCardTransactions = catchAsync(async (req, res) => {
+  const result = await CreditCardTrackerServices.getAllCreditCardTransactions(
+    req
+  );
+  sendResponse(res, {
+    statusCode: StatusCodes.OK,
+    success: true,
+    message: "CreditCardTransactions retrieved successfully",
+    data: result.data,
+    meta: result.meta,
+  });
+});
+
 const addTransactionToCreditCard = catchAsync(async (req, res) => {
   const result = await CreditCardTrackerServices.addTransactionToCreditCard(
     req
@@ -103,6 +116,7 @@ export const CreditCardTrackerControllers = {
   deleteCreditCardTracker,
   createCreditCardTracker,
 
+  getAllCreditCardTransactions,
   addTransactionToCreditCard,
   getTransactionById,
   updateTransactionById,
