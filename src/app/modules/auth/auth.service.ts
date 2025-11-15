@@ -1,7 +1,7 @@
 import { PrismaClient, Role } from "@prisma/client";
 import { compare, hash } from "bcrypt";
 import { jwtHelpers } from "../../helper/jwtHelper";
-import { JwtPayload, Secret } from "jsonwebtoken";
+import { JwtPayload } from "jsonwebtoken";
 import ApiError from "../../error/ApiErrors";
 import { OTPFn } from "../../helper/OTPFn";
 import OTPVerify from "../../helper/OTPVerify";
@@ -145,7 +145,6 @@ const socialLogin = async (payload: {
       role: true,
       customerId: true,
       status: true,
-      connectAccountId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -174,7 +173,6 @@ const socialLogin = async (payload: {
         role: true,
         customerId: true,
         status: true,
-        connectAccountId: true,
         createdAt: true,
         updatedAt: true,
       },
