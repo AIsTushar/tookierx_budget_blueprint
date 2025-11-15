@@ -37,12 +37,8 @@ const getCreditCardTrackers = async (req: Request) => {
 
   const queryBuilder = new QueryBuilder(req.query, prisma.creditCardTracker);
   const results = await queryBuilder
-    .filter(creditCardTrackerFilterFields)
-    .search(creditCardTrackerSearchFields)
-    .sort()
     .paginate()
     .select(creditCardTrackerSelect)
-    .filterByRange(creditCardTrackerRangeFilter)
     .rawFilter({ userId })
     .execute();
 
@@ -133,7 +129,7 @@ const updateCreditCardTracker = async (req: Request) => {
   if (existing.userId !== userId) {
     throw new ApiError(
       StatusCodes.FORBIDDEN,
-      `You do not have permission to update this credit card tracker`
+      `You do not have permission to update this credit card`
     );
   }
 

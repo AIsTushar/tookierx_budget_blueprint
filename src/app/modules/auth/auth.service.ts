@@ -6,7 +6,6 @@ import ApiError from "../../error/ApiErrors";
 import { OTPFn } from "../../helper/OTPFn";
 import OTPVerify from "../../helper/OTPVerify";
 import { StatusCodes } from "http-status-codes";
-import { createStripeCustomerAcc } from "../../helper/createStripeCustomerAcc";
 
 const prisma = new PrismaClient();
 const logInFromDB = async (payload: {
@@ -17,14 +16,6 @@ const logInFromDB = async (payload: {
   const findUser = await prisma.user.findUnique({
     where: {
       email: payload.email,
-    },
-    include: {
-      subscriptionUser: {
-        select: {
-          subscriptionStatus: true,
-          cancelAtPeriodEnd: true,
-        },
-      },
     },
   });
   if (!findUser) {
@@ -59,16 +50,14 @@ const logInFromDB = async (payload: {
     name: findUser.name,
     role: findUser.role,
     status: findUser.status,
-    subscriptionStatus: findUser.subscriptionUser?.subscriptionStatus,
-    cancelAtPeriodEnd: findUser.subscriptionUser?.cancelAtPeriodEnd,
     fcmToken: findUser.fcmToken,
   };
-  const token = jwtHelpers.generateToken(userInfo, { expiresIn: "24h" });
+  const token = jwtHelpers.generateToken(userInfo, { expiresIn: "15d" });
   return { accessToken: token, ...userInfo };
 };
 
 const verifyOtp = async (payload: { email: string; otp: number }) => {
-  const { message } = await OTPVerify({ ...payload, time: "24h" });
+  const { message } = await OTPVerify({ ...payload, time: "15d" });
 
   if (message) {
     const updateUserInfo = await prisma.user.update({
@@ -90,7 +79,7 @@ const verifyOtp = async (payload: { email: string; otp: number }) => {
         updatedAt: true,
       },
     });
-    await createStripeCustomerAcc(updateUserInfo);
+
     return updateUserInfo;
   }
 };
@@ -177,7 +166,6 @@ const socialLogin = async (payload: {
         updatedAt: true,
       },
     });
-    await createStripeCustomerAcc(result);
 
     const accessToken = jwtHelpers.generateToken(
       { id: result.id, email: result.email, role: result.role },
